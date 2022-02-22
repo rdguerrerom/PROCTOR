@@ -127,6 +127,36 @@ namespace PROCTOR {
         return matOut;
     }
 
+    void fftshift2(std::shared_ptr< Eigen::MatrixXcd > matIn)
+    {
+        // size of the task
+        const int nRows = matIn->rows();
+        const int nCols = matIn->cols();
+        // temporary storage fot the task
+        std::shared_ptr< Eigen::VectorXcd > tmpOut(new Eigen::VectorXcd(nCols));
+        // iterating through the rows
+        for (int k = 0; k < nRows; ++k) {
+            // moving the row to the temporary storage
+            *tmpOut = matIn->row(k);
+            // shift execution for the k-th row
+            fftshift1(tmpOut);
+            // copying the shifted content back to thek-th row
+            matIn->row(k) = *tmpOut;
+        }
+        // in case -f non-squared grids.
+        tmpOut->resize(nRows);
+        // iterating through the columns
+        for (int k = 0; k < nCols; ++k) {
+            // moving the row to the temporary storage
+            *tmpOut = matIn->col(k);
+            // shift execution for the k-th row
+            fftshift1(tmpOut);
+            // copying the shifted content back to thek-th row
+            matIn->col(k)=*tmpOut;
+        }
+    }
+
+
     inline std::shared_ptr< Eigen::MatrixXcd > inv_fft2(std::shared_ptr< Eigen::MatrixXcd > matIn)
     {
         // size of the task
@@ -158,11 +188,39 @@ namespace PROCTOR {
         return matOut;
     }
 
+    void inv_fftshift2(std::shared_ptr< Eigen::MatrixXcd > matIn)
+    {
+        // size of the task
+        const int nRows = matIn->rows();
+        const int nCols = matIn->cols();
+        // temporary storage fot the task
+        std::shared_ptr< Eigen::VectorXcd > tmpOut(new Eigen::VectorXcd(nCols));
+        // iterating through the rows
+        for (int k = 0; k < nRows; ++k) {
+            // moving the row to the temporary storage
+            *tmpOut = matIn->row(k);
+            // shift execution for the k-th row
+            inv_fftshift1(tmpOut);
+            // copying the shifted content back to thek-th row
+            matIn->row(k) = *tmpOut;
+        }
+        // in case -f non-squared grids.
+        tmpOut->resize(nRows);
+        // iterating through the columns
+        for (int k = 0; k < nCols; ++k) {
+            // moving the row to the temporary storage
+            *tmpOut = matIn->col(k);
+            // shift execution for the k-th row
+            inv_fftshift1(tmpOut);
+            // copying the shifted content back to thek-th row
+            matIn->col(k)=*tmpOut;
+        }
+    }
 }
 int main(){
 
     size_t n_nodes = 16;
-     
+    /*     
     // 1D test
     std::shared_ptr<Eigen::VectorXcd> psi_1D( new Eigen::VectorXcd(n_nodes));
     psi_1D->setRandom();
@@ -172,14 +230,17 @@ int main(){
     PROCTOR::inv_fftshift1(psi_1D);
     psi_1D = PROCTOR::inv_fft1(psi_1D);
     std::cout<<"psi\n"<<*psi_1D<<std::endl;
-    
+    */
 
-    /*// 2D test
-      std::shared_ptr<Eigen::MatrixXcd> psi_2D( new Eigen::MatrixXcd(n_nodes, n_nodes));
-      psi_2D->setRandom();
-      std::cout<<"psi\n"<<*psi_2D<<std::endl;
-      psi_2D = fft2(psi_2D);
-      psi_2D = inv_fft2(psi_2D);
-      std::cout<<"psi\n"<<*psi_2D<<std::endl;*/
+    // 2D test
+    std::shared_ptr<Eigen::MatrixXcd> psi_2D( new Eigen::MatrixXcd(n_nodes, n_nodes));
+    psi_2D->setRandom();
+    std::cout<<"psi\n"<<*psi_2D<<std::endl;
+    psi_2D = PROCTOR::fft2(psi_2D);
+    PROCTOR::fftshift2(psi_2D);
+    PROCTOR::inv_fftshift2(psi_2D);
+    psi_2D = PROCTOR::inv_fft2(psi_2D);
+    std::cout<<"psi\n"<<*psi_2D<<std::endl;
+      
     return 0;
 }
