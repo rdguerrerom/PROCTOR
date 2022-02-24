@@ -309,6 +309,7 @@ namespace PROCTOR {
      * [2] Al-Mohy, A. H. and N. J. Higham, “A new scaling and squaring algorithm for the matrix exponential,” SIAM J. Matrix Anal. Appl., 31(3) (2009), pp. 970–989.
      * [3] Golub, G. H. and C. F. Van Loan, Matrix Computation, p. 384, Johns Hopkins University Press, 1983.
      * [4] Moler, C. B. and C. F. Van Loan, “Nineteen Dubious Ways to Compute the Exponential of a Matrix,” SIAM Review 20, 1978, pp. 801–836. Reprinted and updated as “Nineteen Dubious Ways to Compute the Exponential of a Matrix, Twenty-Five Years Later,” SIAM Review 45, 2003, pp. 3–49.
+     * [5] Roger B. Sidje, "Expokit: A software package for computing matrix exponentials." ACM Transactions on Mathematical Software (TOMS) 24.1 (1998): 130-156.
      *
      * The main purpose of this routine is computing the short-time propagators like e^{i*V*dt}.
      *
@@ -317,13 +318,13 @@ namespace PROCTOR {
      *
      * @return  short-time propagators like e^{i*V*dt}.
      */
-    inline std::shared_ptr< Eigen::MatrixXcd > pade_exp( std::shared_ptr< Eigen::MatrixXcd > iH, int p=10 )
+    inline std::shared_ptr< Eigen::MatrixXcd > pade_exp( std::shared_ptr< Eigen::MatrixXcd > iH, int p=8 )
     {
         if(iH->rows() == iH->cols())
             throw std::runtime_error("iH should be squared");
 
         int n = iH->rows();
-        // Pade coefficients
+        // Pade coefficients, Eq(3) of Ref [5]
         Eigen::VectorXcd c(p+1);
         c(0) = std::complex<double>( 1.0 , 0.0 );
         for (int k = 0; k < p; k++)
@@ -341,8 +342,7 @@ namespace PROCTOR {
             iHs = *iH;
         }
 
-        // Horner evaluation of the irreducible fraction (see ref. above)
-
+        // Horner evaluation of the irreducible fraction, Eq(4) of Ref [5]
         Eigen::MatrixXcd I_(n,n);
         I_.setIdentity();
         Eigen::MatrixXcd iH2 = iHs*iHs;
