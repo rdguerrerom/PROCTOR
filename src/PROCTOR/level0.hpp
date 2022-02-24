@@ -1,4 +1,11 @@
 #pragma once
+/**
+ * @file level0.hpp
+ * @brief Level-0 infrastructure routines
+ * @author Ruben Guerrero
+ * @version 0.0.1
+ * @date 2022-02-23
+ */
 
 #include<Eigen/Dense>
 #include <memory>
