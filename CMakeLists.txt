@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.0)
 project(PROCTOR)
+# To be activated later.
+# foollowing the advice at:
+#https://eigen.tuxfamily.org/dox/group__TopicStlContainers.html
+#target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+
 
 SET(SOURCE_DIR "src/PROCTOR")
 # Tell cmake that headers are in alse in source_dir
@@ -14,6 +19,7 @@ SET(TESTS ${SOURCES}
 # Generate a test executable
 include_directories(lib/Catch2/include)
 add_executable("${PROJECT_NAME}_test" ${TESTS})
+target_compile_features("${PROJECT_NAME}_test" PUBLIC cxx_std_17)
 
 # Generate python module
 add_subdirectory(lib/pybind11)
