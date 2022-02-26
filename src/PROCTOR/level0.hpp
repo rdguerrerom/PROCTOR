@@ -318,6 +318,10 @@ extern "C" {
          *
          * The main purpose of this routine is computing the short-time propagators like e^{i*V*dt}.
          *
+         * Note: The resuults differ from the results computed using Eigen:::MatrixBase::exp(), therefore the later should be used instead!!!!
+         * It uses:
+         * Nicholas J. Higham, "The scaling and squaring method for the matrix exponential revisited," SIAM J. Matrix Anal. Applic., 26:1179–1193, 2005.
+         *
          * @param iH Complex matrix i*V*dt.   
          * @param p Degree of the rational Pade approximation to the exponential function, b default p=10.
          *
@@ -325,7 +329,7 @@ extern "C" {
          */
         inline std::shared_ptr< Eigen::MatrixXcd > pade_exp( std::shared_ptr< Eigen::MatrixXcd > iH, int p=8 )
         {
-            if(iH->rows() == iH->cols())
+            if(iH->rows() != iH->cols())
                 throw std::runtime_error("iH should be squared");
 
             int n = iH->rows();
