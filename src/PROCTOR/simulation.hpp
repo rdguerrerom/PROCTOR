@@ -98,39 +98,46 @@ public:
   ~Simulation1D() {}
   // Setters
   // Allows loading the initial condition
-  void set_initial_wave_packet(int state_idx, std::string electronic_state_type, Eigen::Ref<Eigen::VectorXcd> psi_0)
-  {
-    _electronic_wave_packet[electronic_state_type][state_idx] = std::tuple<int, Eigen::VectorXcd>{state_idx, psi_0};
+  void set_initial_wave_packet(int state_idx, std::string electronic_state_type,
+                               Eigen::Ref<Eigen::VectorXcd> psi_0) {
+    _electronic_wave_packet[electronic_state_type][state_idx] =
+        std::tuple<int, Eigen::VectorXcd>{state_idx, psi_0};
   }
   // Allows load a new PES
   void set_PES(int state_idx, std::string electronic_state_type,
-               Eigen::Ref<Eigen::VectorXd> PES) 
-  {
-    _electronic_PES[electronic_state_type].push_back(std::tuple<int, Eigen::VectorXd>{state_idx,PES});
+               Eigen::Ref<Eigen::VectorXd> PES) {
+    _electronic_PES[electronic_state_type].push_back(
+        std::tuple<int, Eigen::VectorXd>{state_idx, PES});
   }
   // Allows loading a new DM
   void set_DM(int state_idx, std::string electronic_state_type,
-               Eigen::Ref<Eigen::VectorXd> DM) 
-  {
-    _electronic_DM[electronic_state_type].push_back(std::tuple<int, Eigen::VectorXd>{state_idx,DM});
+              Eigen::Ref<Eigen::VectorXd> DM) {
+    _electronic_DM[electronic_state_type].push_back(
+        std::tuple<int, Eigen::VectorXd>{state_idx, DM});
   }
   // Allows loading a new NACME
-  void set_NACME(int state1_idx, int state2_idx, std::string electronic_state_type,
-               Eigen::Ref<Eigen::VectorXd> NACME) 
-  {
-    _electronic_NACME[electronic_state_type].push_back(std::tuple<int, int, Eigen::VectorXd>{state1_idx, state2_idx, NACME});
+  void set_NACME(int state1_idx, int state2_idx,
+                 std::string electronic_state_type,
+                 Eigen::Ref<Eigen::VectorXd> NACME) {
+    _electronic_NACME[electronic_state_type].push_back(
+        std::tuple<int, int, Eigen::VectorXd>{state1_idx, state2_idx, NACME});
   }
   // Allows loading a new TDM
-  void set_TDM(int state1_idx, int state2_idx, std::string electronic_state_type,
-               Eigen::Ref<Eigen::VectorXd> TDM) 
-  {
-    _electronic_TDM[electronic_state_type].push_back(std::tuple<int, int, Eigen::VectorXd>{state1_idx, state2_idx, TDM});
+  void set_TDM(int state1_idx, int state2_idx,
+               std::string electronic_state_type,
+               Eigen::Ref<Eigen::VectorXd> TDM) {
+    _electronic_TDM[electronic_state_type].push_back(
+        std::tuple<int, int, Eigen::VectorXd>{state1_idx, state2_idx, TDM});
   }
   // Allows loading a new SOC
-  void set_TDM(int state1_idx, int state2_idx, std::string electronic_state1_type, std::string electronic_state2_type,
-               Eigen::Ref<Eigen::VectorXd> SOC) 
-  {
-    _electronic_SOC[std::tuple<std::string, std::string>{electronic_state1_type, electronic_state2_type}].push_back(std::tuple<int, int, Eigen::VectorXd>{state1_idx, state2_idx, SOC});
+  void set_TDM(int state1_idx, int state2_idx,
+               std::string electronic_state1_type,
+               std::string electronic_state2_type,
+               Eigen::Ref<Eigen::VectorXd> SOC) {
+    _electronic_SOC[std::tuple<std::string, std::string>{
+                        electronic_state1_type, electronic_state2_type}]
+        .push_back(
+            std::tuple<int, int, Eigen::VectorXd>{state1_idx, state2_idx, SOC});
   }
   // Getters
   /**
@@ -138,381 +145,382 @@ public:
    *
    * @return True, if the setup is correct. False if not.
    */
-  bool electronic_PES_complete()
-  {
-    // Handler for the logic of  the blocking  of the Hamiltonian for different simulation setups
-    // we are going from 
-    if(_n_singlets>0 && _n_doublets>0 && _n_triplets>0){
+  bool electronic_PES_complete() {
+    // Handler for the logic of  the blocking  of the Hamiltonian for different
+    // simulation setups we are going from
+    if (_n_singlets > 0 && _n_doublets > 0 && _n_triplets > 0) {
       // checking the singlet block
-      if(_singlet_PES_loaded.size() != _singlet_PES.size())
+      if (_singlet_PES_loaded.size() != _singlet_PES.size())
         return false;
-      for(auto ready:_singlet_PES_loaded)
-        if(ready != true)
+      for (auto ready : _singlet_PES_loaded)
+        if (ready != true)
           return false;
       // checking the doublet block
-      if(_doublet_PES_loaded.size() != _doublet_PES.size())
+      if (_doublet_PES_loaded.size() != _doublet_PES.size())
         return false;
-      for(auto ready:_doublet_PES_loaded)
-        if(ready != true)
+      for (auto ready : _doublet_PES_loaded)
+        if (ready != true)
           return false;
       // checking the triplet block
-      if(_triplet_PES_loaded.size() != _triplet_PES.size())
+      if (_triplet_PES_loaded.size() != _triplet_PES.size())
         return false;
-      for(auto ready:_triplet_PES_loaded)
-        if(ready != true)
+      for (auto ready : _triplet_PES_loaded)
+        if (ready != true)
           return false;
-    } else if(_n_singlets>0 && _n_doublets>0){
+    } else if (_n_singlets > 0 && _n_doublets > 0) {
       // checking the singlet block
-      if(_singlet_PES_loaded.size() != _singlet_PES.size())
+      if (_singlet_PES_loaded.size() != _singlet_PES.size())
         return false;
-      for(auto ready:_singlet_PES_loaded)
-        if(ready != true)
+      for (auto ready : _singlet_PES_loaded)
+        if (ready != true)
           return false;
       // checking the doublet block
-      if(_doublet_PES_loaded.size() != _doublet_PES.size())
+      if (_doublet_PES_loaded.size() != _doublet_PES.size())
         return false;
-      for(auto ready:_doublet_PES_loaded)
-        if(ready != true)
+      for (auto ready : _doublet_PES_loaded)
+        if (ready != true)
           return false;
 
-    } else if(_n_singlets>0 && _n_triplets>0){
+    } else if (_n_singlets > 0 && _n_triplets > 0) {
       // checking the singlet block
-      if(_singlet_PES_loaded.size() != _singlet_PES.size())
+      if (_singlet_PES_loaded.size() != _singlet_PES.size())
         return false;
-      for(auto ready:_singlet_PES_loaded)
-        if(ready != true)
+      for (auto ready : _singlet_PES_loaded)
+        if (ready != true)
           return false;
       // checking the triplet block
-      if(_triplet_PES_loaded.size() != _triplet_PES.size())
+      if (_triplet_PES_loaded.size() != _triplet_PES.size())
         return false;
-      for(auto ready:_triplet_PES_loaded)
-        if(ready != true)
+      for (auto ready : _triplet_PES_loaded)
+        if (ready != true)
           return false;
 
-    } else if( _n_doublets>0 && _n_triplets>0){
+    } else if (_n_doublets > 0 && _n_triplets > 0) {
       // checking the doublet block
-      if(_doublet_PES_loaded.size() != _doublet_PES.size())
+      if (_doublet_PES_loaded.size() != _doublet_PES.size())
         return false;
-      for(auto ready:_doublet_PES_loaded)
-        if(ready != true)
+      for (auto ready : _doublet_PES_loaded)
+        if (ready != true)
           return false;
       // checking the triplet block
-      if(_triplet_PES_loaded.size() != _triplet_PES.size())
+      if (_triplet_PES_loaded.size() != _triplet_PES.size())
         return false;
-      for(auto ready:_triplet_PES_loaded)
-        if(ready != true)
+      for (auto ready : _triplet_PES_loaded)
+        if (ready != true)
           return false;
 
-    } else if ( _n_triplets>0 ) {
+    } else if (_n_triplets > 0) {
       // checking the triplet block
-      if(_triplet_PES_loaded.size() != _triplet_PES.size())
+      if (_triplet_PES_loaded.size() != _triplet_PES.size())
         return false;
-      for(auto ready:_triplet_PES_loaded)
-        if(ready != true)
+      for (auto ready : _triplet_PES_loaded)
+        if (ready != true)
           return false;
 
-    } else if ( _n_doublets>0 ) {
+    } else if (_n_doublets > 0) {
       // checking the doublet block
-      if(_doublet_PES_loaded.size() != _doublet_PES.size())
+      if (_doublet_PES_loaded.size() != _doublet_PES.size())
         return false;
-      for(auto ready:_doublet_PES_loaded)
-        if(ready != true)
+      for (auto ready : _doublet_PES_loaded)
+        if (ready != true)
           return false;
-    } else if ( _n_singlets>0 ) {
+    } else if (_n_singlets > 0) {
       // checking the singlet block
-      if(_singlet_PES_loaded.size() != _singlet_PES.size())
+      if (_singlet_PES_loaded.size() != _singlet_PES.size())
         return false;
-      for(auto ready:_singlet_PES_loaded)
-        if(ready != true)
+      for (auto ready : _singlet_PES_loaded)
+        if (ready != true)
           return false;
-    } else { throw std::runtime_error("PES setup is not supported by this version.");  }
-
+    } else {
+      throw std::runtime_error("PES setup is not supported by this version.");
+    }
   }
   /**
    * @brief Check if the DM setup is correct
    *
    * @return True, if the setup is correct. False if not.
    */
-  bool electronic_DM_complete()
-  {
-    // Handler for the logic of  the blocking  of the Hamiltonian for different simulation setups
-    // we are going from 
-    if(_n_singlets>0 && _n_doublets>0 && _n_triplets>0){
+  bool electronic_DM_complete() {
+    // Handler for the logic of  the blocking  of the Hamiltonian for different
+    // simulation setups we are going from
+    if (_n_singlets > 0 && _n_doublets > 0 && _n_triplets > 0) {
       // checking the singlet block
-      if(_singlet_DM_loaded.size() != _singlet_DM.size())
+      if (_singlet_DM_loaded.size() != _singlet_DM.size())
         return false;
-      for(auto ready:_singlet_DM_loaded)
-        if(ready != true)
+      for (auto ready : _singlet_DM_loaded)
+        if (ready != true)
           return false;
       // checking the doublet block
-      if(_doublet_DM_loaded.size() != _doublet_DM.size())
+      if (_doublet_DM_loaded.size() != _doublet_DM.size())
         return false;
-      for(auto ready:_doublet_DM_loaded)
-        if(ready != true)
+      for (auto ready : _doublet_DM_loaded)
+        if (ready != true)
           return false;
       // checking the triplet block
-      if(_triplet_DM_loaded.size() != _triplet_DM.size())
+      if (_triplet_DM_loaded.size() != _triplet_DM.size())
         return false;
-      for(auto ready:_triplet_DM_loaded)
-        if(ready != true)
+      for (auto ready : _triplet_DM_loaded)
+        if (ready != true)
           return false;
-    } else if(_n_singlets>0 && _n_doublets>0){
+    } else if (_n_singlets > 0 && _n_doublets > 0) {
       // checking the singlet block
-      if(_singlet_DM_loaded.size() != _singlet_DM.size())
+      if (_singlet_DM_loaded.size() != _singlet_DM.size())
         return false;
-      for(auto ready:_singlet_DM_loaded)
-        if(ready != true)
+      for (auto ready : _singlet_DM_loaded)
+        if (ready != true)
           return false;
       // checking the doublet block
-      if(_doublet_DM_loaded.size() != _doublet_DM.size())
+      if (_doublet_DM_loaded.size() != _doublet_DM.size())
         return false;
-      for(auto ready:_doublet_DM_loaded)
-        if(ready != true)
+      for (auto ready : _doublet_DM_loaded)
+        if (ready != true)
           return false;
 
-    } else if(_n_singlets>0 && _n_triplets>0){
+    } else if (_n_singlets > 0 && _n_triplets > 0) {
       // checking the singlet block
-      if(_singlet_DM_loaded.size() != _singlet_DM.size())
+      if (_singlet_DM_loaded.size() != _singlet_DM.size())
         return false;
-      for(auto ready:_singlet_DM_loaded)
-        if(ready != true)
+      for (auto ready : _singlet_DM_loaded)
+        if (ready != true)
           return false;
       // checking the triplet block
-      if(_triplet_DM_loaded.size() != _triplet_DM.size())
+      if (_triplet_DM_loaded.size() != _triplet_DM.size())
         return false;
-      for(auto ready:_triplet_DM_loaded)
-        if(ready != true)
+      for (auto ready : _triplet_DM_loaded)
+        if (ready != true)
           return false;
 
-    } else if( _n_doublets>0 && _n_triplets>0){
+    } else if (_n_doublets > 0 && _n_triplets > 0) {
       // checking the doublet block
-      if(_doublet_DM_loaded.size() != _doublet_DM.size())
+      if (_doublet_DM_loaded.size() != _doublet_DM.size())
         return false;
-      for(auto ready:_doublet_DM_loaded)
-        if(ready != true)
+      for (auto ready : _doublet_DM_loaded)
+        if (ready != true)
           return false;
       // checking the triplet block
-      if(_triplet_DM_loaded.size() != _triplet_DM.size())
+      if (_triplet_DM_loaded.size() != _triplet_DM.size())
         return false;
-      for(auto ready:_triplet_DM_loaded)
-        if(ready != true)
+      for (auto ready : _triplet_DM_loaded)
+        if (ready != true)
           return false;
 
-    } else if ( _n_triplets>0 ) {
+    } else if (_n_triplets > 0) {
       // checking the triplet block
-      if(_triplet_DM_loaded.size() != _triplet_DM.size())
+      if (_triplet_DM_loaded.size() != _triplet_DM.size())
         return false;
-      for(auto ready:_triplet_DM_loaded)
-        if(ready != true)
+      for (auto ready : _triplet_DM_loaded)
+        if (ready != true)
           return false;
 
-    } else if ( _n_doublets>0 ) {
+    } else if (_n_doublets > 0) {
       // checking the doublet block
-      if(_doublet_DM_loaded.size() != _doublet_DM.size())
+      if (_doublet_DM_loaded.size() != _doublet_DM.size())
         return false;
-      for(auto ready:_doublet_DM_loaded)
-        if(ready != true)
+      for (auto ready : _doublet_DM_loaded)
+        if (ready != true)
           return false;
-    } else if ( _n_singlets>0 ) {
+    } else if (_n_singlets > 0) {
       // checking the singlet block
-      if(_singlet_DM_loaded.size() != _singlet_DM.size())
+      if (_singlet_DM_loaded.size() != _singlet_DM.size())
         return false;
-      for(auto ready:_singlet_DM_loaded)
-        if(ready != true)
+      for (auto ready : _singlet_DM_loaded)
+        if (ready != true)
           return false;
-    } else { throw std::runtime_error("DM setup is not supported by this version.");  }
-
+    } else {
+      throw std::runtime_error("DM setup is not supported by this version.");
+    }
   }
   /**
    * @brief Check if the DM setup is correct
    *
    * @return True, if the setup is correct. False if not.
    */
-  bool electronic_TDM_complete()
-  {
-    // Handler for the logic of  the blocking  of the Hamiltonian for different simulation setups
-    // we are going from 
-    if(_n_singlets>0 && _n_doublets>0 && _n_triplets>0){
+  bool electronic_TDM_complete() {
+    // Handler for the logic of  the blocking  of the Hamiltonian for different
+    // simulation setups we are going from
+    if (_n_singlets > 0 && _n_doublets > 0 && _n_triplets > 0) {
       // checking the singlet block
-      if(_singlet_TDM_loaded.size() != _singlet_TDM.size())
+      if (_singlet_TDM_loaded.size() != _singlet_TDM.size())
         return false;
-      for(auto ready:_singlet_TDM_loaded)
-        if(ready != true)
+      for (auto ready : _singlet_TDM_loaded)
+        if (ready != true)
           return false;
       // checking the doublet block
-      if(_doublet_TDM_loaded.size() != _doublet_TDM.size())
+      if (_doublet_TDM_loaded.size() != _doublet_TDM.size())
         return false;
-      for(auto ready:_doublet_TDM_loaded)
-        if(ready != true)
+      for (auto ready : _doublet_TDM_loaded)
+        if (ready != true)
           return false;
       // checking the triplet block
-      if(_triplet_TDM_loaded.size() != _triplet_TDM.size())
+      if (_triplet_TDM_loaded.size() != _triplet_TDM.size())
         return false;
-      for(auto ready:_triplet_TDM_loaded)
-        if(ready != true)
+      for (auto ready : _triplet_TDM_loaded)
+        if (ready != true)
           return false;
-    } else if(_n_singlets>0 && _n_doublets>0){
+    } else if (_n_singlets > 0 && _n_doublets > 0) {
       // checking the singlet block
-      if(_singlet_TDM_loaded.size() != _singlet_TDM.size())
+      if (_singlet_TDM_loaded.size() != _singlet_TDM.size())
         return false;
-      for(auto ready:_singlet_TDM_loaded)
-        if(ready != true)
+      for (auto ready : _singlet_TDM_loaded)
+        if (ready != true)
           return false;
       // checking the doublet block
-      if(_doublet_TDM_loaded.size() != _doublet_TDM.size())
+      if (_doublet_TDM_loaded.size() != _doublet_TDM.size())
         return false;
-      for(auto ready:_doublet_TDM_loaded)
-        if(ready != true)
+      for (auto ready : _doublet_TDM_loaded)
+        if (ready != true)
           return false;
 
-    } else if(_n_singlets>0 && _n_triplets>0){
+    } else if (_n_singlets > 0 && _n_triplets > 0) {
       // checking the singlet block
-      if(_singlet_TDM_loaded.size() != _singlet_TDM.size())
+      if (_singlet_TDM_loaded.size() != _singlet_TDM.size())
         return false;
-      for(auto ready:_singlet_TDM_loaded)
-        if(ready != true)
+      for (auto ready : _singlet_TDM_loaded)
+        if (ready != true)
           return false;
       // checking the triplet block
-      if(_triplet_TDM_loaded.size() != _triplet_TDM.size())
+      if (_triplet_TDM_loaded.size() != _triplet_TDM.size())
         return false;
-      for(auto ready:_triplet_TDM_loaded)
-        if(ready != true)
+      for (auto ready : _triplet_TDM_loaded)
+        if (ready != true)
           return false;
 
-    } else if( _n_doublets>0 && _n_triplets>0){
+    } else if (_n_doublets > 0 && _n_triplets > 0) {
       // checking the doublet block
-      if(_doublet_TDM_loaded.size() != _doublet_TDM.size())
+      if (_doublet_TDM_loaded.size() != _doublet_TDM.size())
         return false;
-      for(auto ready:_doublet_TDM_loaded)
-        if(ready != true)
+      for (auto ready : _doublet_TDM_loaded)
+        if (ready != true)
           return false;
       // checking the triplet block
-      if(_triplet_TDM_loaded.size() != _triplet_TDM.size())
+      if (_triplet_TDM_loaded.size() != _triplet_TDM.size())
         return false;
-      for(auto ready:_triplet_TDM_loaded)
-        if(ready != true)
+      for (auto ready : _triplet_TDM_loaded)
+        if (ready != true)
           return false;
 
-    } else if ( _n_triplets>0 ) {
+    } else if (_n_triplets > 0) {
       // checking the triplet block
-      if(_triplet_TDM_loaded.size() != _triplet_TDM.size())
+      if (_triplet_TDM_loaded.size() != _triplet_TDM.size())
         return false;
-      for(auto ready:_triplet_TDM_loaded)
-        if(ready != true)
+      for (auto ready : _triplet_TDM_loaded)
+        if (ready != true)
           return false;
 
-    } else if ( _n_doublets>0 ) {
+    } else if (_n_doublets > 0) {
       // checking the doublet block
-      if(_doublet_TDM_loaded.size() != _doublet_TDM.size())
+      if (_doublet_TDM_loaded.size() != _doublet_TDM.size())
         return false;
-      for(auto ready:_doublet_TDM_loaded)
-        if(ready != true)
+      for (auto ready : _doublet_TDM_loaded)
+        if (ready != true)
           return false;
-    } else if ( _n_singlets>0 ) {
+    } else if (_n_singlets > 0) {
       // checking the singlet block
-      if(_singlet_TDM_loaded.size() != _singlet_TDM.size())
+      if (_singlet_TDM_loaded.size() != _singlet_TDM.size())
         return false;
-      for(auto ready:_singlet_TDM_loaded)
-        if(ready != true)
+      for (auto ready : _singlet_TDM_loaded)
+        if (ready != true)
           return false;
-    } else { throw std::runtime_error("TDM setup is not supported by this version.");  }
-
+    } else {
+      throw std::runtime_error("TDM setup is not supported by this version.");
+    }
   }
   /**
    * @brief Check if the NACME setup is correct
    *
    * @return True, if the setup is correct. False if not.
    */
-  bool electronic_NACME_complete()
-  {
-    // Handler for the logic of  the blocking  of the Hamiltonian for different simulation setups
-    // we are going from 
-    if(_n_singlets>0 && _n_doublets>0 && _n_triplets>0){
+  bool electronic_NACME_complete() {
+    // Handler for the logic of  the blocking  of the Hamiltonian for different
+    // simulation setups we are going from
+    if (_n_singlets > 0 && _n_doublets > 0 && _n_triplets > 0) {
       // checking the singlet block
-      if(_singlet_NACME_loaded.size() != _singlet_NACME.size())
+      if (_singlet_NACME_loaded.size() != _singlet_NACME.size())
         return false;
-      for(auto ready:_singlet_NACME_loaded)
-        if(ready != true)
+      for (auto ready : _singlet_NACME_loaded)
+        if (ready != true)
           return false;
       // checking the doublet block
-      if(_doublet_NACME_loaded.size() != _doublet_NACME.size())
+      if (_doublet_NACME_loaded.size() != _doublet_NACME.size())
         return false;
-      for(auto ready:_doublet_NACME_loaded)
-        if(ready != true)
+      for (auto ready : _doublet_NACME_loaded)
+        if (ready != true)
           return false;
       // checking the triplet block
-      if(_triplet_NACME_loaded.size() != _triplet_NACME.size())
+      if (_triplet_NACME_loaded.size() != _triplet_NACME.size())
         return false;
-      for(auto ready:_triplet_NACME_loaded)
-        if(ready != true)
+      for (auto ready : _triplet_NACME_loaded)
+        if (ready != true)
           return false;
-    } else if(_n_singlets>0 && _n_doublets>0){
+    } else if (_n_singlets > 0 && _n_doublets > 0) {
       // checking the singlet block
-      if(_singlet_NACME_loaded.size() != _singlet_NACME.size())
+      if (_singlet_NACME_loaded.size() != _singlet_NACME.size())
         return false;
-      for(auto ready:_singlet_NACME_loaded)
-        if(ready != true)
+      for (auto ready : _singlet_NACME_loaded)
+        if (ready != true)
           return false;
       // checking the doublet block
-      if(_doublet_NACME_loaded.size() != _doublet_NACME.size())
+      if (_doublet_NACME_loaded.size() != _doublet_NACME.size())
         return false;
-      for(auto ready:_doublet_NACME_loaded)
-        if(ready != true)
+      for (auto ready : _doublet_NACME_loaded)
+        if (ready != true)
           return false;
 
-    } else if(_n_singlets>0 && _n_triplets>0){
+    } else if (_n_singlets > 0 && _n_triplets > 0) {
       // checking the singlet block
-      if(_singlet_NACME_loaded.size() != _singlet_NACME.size())
+      if (_singlet_NACME_loaded.size() != _singlet_NACME.size())
         return false;
-      for(auto ready:_singlet_NACME_loaded)
-        if(ready != true)
+      for (auto ready : _singlet_NACME_loaded)
+        if (ready != true)
           return false;
       // checking the triplet block
-      if(_triplet_NACME_loaded.size() != _triplet_NACME.size())
+      if (_triplet_NACME_loaded.size() != _triplet_NACME.size())
         return false;
-      for(auto ready:_triplet_NACME_loaded)
-        if(ready != true)
+      for (auto ready : _triplet_NACME_loaded)
+        if (ready != true)
           return false;
 
-    } else if( _n_doublets>0 && _n_triplets>0){
+    } else if (_n_doublets > 0 && _n_triplets > 0) {
       // checking the doublet block
-      if(_doublet_NACME_loaded.size() != _doublet_NACME.size())
+      if (_doublet_NACME_loaded.size() != _doublet_NACME.size())
         return false;
-      for(auto ready:_doublet_NACME_loaded)
-        if(ready != true)
+      for (auto ready : _doublet_NACME_loaded)
+        if (ready != true)
           return false;
       // checking the triplet block
-      if(_triplet_NACME_loaded.size() != _triplet_NACME.size())
+      if (_triplet_NACME_loaded.size() != _triplet_NACME.size())
         return false;
-      for(auto ready:_triplet_NACME_loaded)
-        if(ready != true)
+      for (auto ready : _triplet_NACME_loaded)
+        if (ready != true)
           return false;
 
-    } else if ( _n_triplets>0 ) {
+    } else if (_n_triplets > 0) {
       // checking the triplet block
-      if(_triplet_NACME_loaded.size() != _triplet_NACME.size())
+      if (_triplet_NACME_loaded.size() != _triplet_NACME.size())
         return false;
-      for(auto ready:_triplet_NACME_loaded)
-        if(ready != true)
+      for (auto ready : _triplet_NACME_loaded)
+        if (ready != true)
           return false;
 
-    } else if ( _n_doublets>0 ) {
+    } else if (_n_doublets > 0) {
       // checking the doublet block
-      if(_doublet_NACME_loaded.size() != _doublet_NACME.size())
+      if (_doublet_NACME_loaded.size() != _doublet_NACME.size())
         return false;
-      for(auto ready:_doublet_NACME_loaded)
-        if(ready != true)
+      for (auto ready : _doublet_NACME_loaded)
+        if (ready != true)
           return false;
-    } else if ( _n_singlets>0 ) {
+    } else if (_n_singlets > 0) {
       // checking the singlet block
-      if(_singlet_NACME_loaded.size() != _singlet_NACME.size())
+      if (_singlet_NACME_loaded.size() != _singlet_NACME.size())
         return false;
-      for(auto ready:_singlet_NACME_loaded)
-        if(ready != true)
+      for (auto ready : _singlet_NACME_loaded)
+        if (ready != true)
           return false;
-    } else { throw std::runtime_error("NACME setup is not supported by this version.");  }
-
+    } else {
+      throw std::runtime_error("NACME setup is not supported by this version.");
+    }
   }
+
 private:
   // Number of points in the grid.
   int _n_grid_points;
@@ -542,16 +550,16 @@ private:
   // electronic Hamiltonian
   Eigen::MatrixXcd _electronic_H;
   // Handler for bookkeeping the blocking of the Hamiltonian
-  std::map<std::tuple<std::string, std::string>,Eigen::MatrixXcd>  _eH_Block;
-  
+  std::map<std::tuple<std::string, std::string>, Eigen::MatrixXcd> _eH_Block;
+
   // electronic wave packets per electronic state type
   std::vector<std::tuple<int, Eigen::VectorXcd>> _singlet_psi;
   std::vector<std::tuple<int, Eigen::VectorXcd>> _doublet_psi;
   std::vector<std::tuple<int, Eigen::VectorXcd>> _triplet_psi;
   std::map<std::string, std::vector<std::tuple<int, Eigen::VectorXcd>>>
       _electronic_wave_packet{{"Singlet", _singlet_psi},
-                      {"Doublet", _doublet_psi},
-                      {"Triplet", _triplet_psi}};
+                              {"Doublet", _doublet_psi},
+                              {"Triplet", _triplet_psi}};
   // Zero-based lists of unique indices for the electronic states
   // List of singlets
   std::vector<int> _singlet_list;
