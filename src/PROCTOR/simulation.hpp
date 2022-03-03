@@ -21,7 +21,7 @@ namespace PROCTOR {
   class Simulation0D {
     public:
       // Constructor
-      Simulation0D() {}
+      Simulation0D()=default;
       // Destructor
       ~Simulation0D() {}
       // Setters
@@ -50,7 +50,7 @@ namespace PROCTOR {
   class Simulation1D {
     public:
       // Constructor
-      Simulation1D() {}
+      Simulation1D()=default;
       /**
        * @brief Contructor for an empty simulation. The initial state shall be
        loaded using a
@@ -66,7 +66,7 @@ namespace PROCTOR {
        * @param[in] n_doublets    Number of doublet states
        * @param[in] n_triplets    Number of triplet states
        */
-      Simulation1D(std::vector<double> x, double dx, double dt, int n_grid_points,
+      Simulation1D(const Eigen::VectorXd& x, double dx, double dt, int n_grid_points,
           int n_singlets, int n_doublets, int n_triplets)
         : _x(x), _dx(dx), _dt(dt), _n_grid_points(n_grid_points),
         _n_singlets(n_singlets), _n_doublets(n_doublets),
@@ -80,7 +80,7 @@ namespace PROCTOR {
           _electronic_H.Zero();
 
           // populating
-          double L = _x.back() - x.front();
+          double L = _x(_n_grid_points-1) - x(0);
           // step-size in k
           _dk = 2.0 * M_PI / L;
           // filling the momentum grid
@@ -563,7 +563,7 @@ namespace PROCTOR {
       // Number of points in the grid.
       int _n_grid_points;
       // discretization of the coordinate
-      std::vector<double> _x;
+      Eigen::VectorXd _x;
       // discretization of the corresponding moomeentum
       std::vector<double> _k;
       //  Space discretization step.
