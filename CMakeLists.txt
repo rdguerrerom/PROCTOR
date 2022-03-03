@@ -4,7 +4,10 @@ project(PROCTOR)
 # foollowing the advice at:
 #https://eigen.tuxfamily.org/dox/group__TopicStlContainers.html
 #target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
-
+find_package( PkgConfig )
+pkg_check_modules( EIGEN3 REQUIRED eigen3 )
+find_package (Eigen3 3.4 REQUIRED NO_MODULE)
+include_directories( ${EIGEN3_INCLUDE_DIRS} )
 
 SET(SOURCE_DIR "src/PROCTOR")
 # Tell cmake that headers are in alse in source_dir
@@ -23,8 +26,7 @@ target_compile_features("${PROJECT_NAME}_test" PUBLIC cxx_std_17)
 
 # Generate python module
 add_subdirectory(lib/pybind11)
-#pybind11_add_module(python_cpp_example ${SOURCES} "${SOURCE_DIR}/bindings.cpp")
+pybind11_add_module(PROCTOR ${SOURCES} "${SOURCE_DIR}/bindings.cpp")
 
 # Allowing to use Eigen 3
-find_package (Eigen3 3.4 REQUIRED NO_MODULE)
 target_link_libraries ("${PROJECT_NAME}_test" Eigen3::Eigen)
