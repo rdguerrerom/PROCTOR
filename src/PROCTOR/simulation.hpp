@@ -75,9 +75,6 @@ namespace PROCTOR {
 
           // resizing containers
           int total_electronic_states = _n_singlets + _n_doublets + _n_triplets;
-          // initializing the Hamiltonian
-          _electronic_H.resize(total_electronic_states, total_electronic_states);
-          _electronic_H.Zero();
 
           // populating
           double L = _x(_n_grid_points-1) - x(0);
