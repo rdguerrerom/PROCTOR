@@ -2,13 +2,22 @@ cmake_minimum_required(VERSION 3.0)
 project(PROCTOR)
 # To be activated later.
 # foollowing the advice at:
-#https://eigen.tuxfamily.org/dox/group__TopicStlContainers.html
-#target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 find_package( PkgConfig )
 pkg_check_modules( EIGEN3 REQUIRED eigen3 )
 find_package (Eigen3 3.4 REQUIRED NO_MODULE)
 include_directories( ${EIGEN3_INCLUDE_DIRS} )
 
+set (FFTW_DIR "/usr/local/Cellar/fftw/3.3.10")
+find_path (FFTW_DIR fftw3.h)
+INCLUDE_DIRECTORIES(${FFTW_DIR})
+link_directories("${FFTW_DIR}")
+#TARGET_LINK_LIBRARIES(libfftw3-3 libfftw3f-3 libfftw3l-3)
+
+#https://eigen.tuxfamily.org/dox/group__TopicStlContainers.html
+#target_compile_features(PROCTOR PUBLIC cxx_std_17)
+set(CMAKE_CXX_STANDARD 17)
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 SET(SOURCE_DIR "src/PROCTOR")
 # Tell cmake that headers are in alse in source_dir
 include_directories(${SOURCE_DIR})
@@ -22,6 +31,7 @@ SET(TESTS ${SOURCES}
 # Generate a test executable
 include_directories(lib/Catch2/include)
 add_executable("${PROJECT_NAME}_test" ${TESTS})
+#https://eigen.tuxfamily.org/dox/group__TopicStlContainers.html
 target_compile_features("${PROJECT_NAME}_test" PUBLIC cxx_std_17)
 
 # Generate python module
