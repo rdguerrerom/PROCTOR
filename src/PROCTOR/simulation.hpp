@@ -12,11 +12,15 @@
 #include "level0.hpp"
 #include <map>
 #include <tuple>
+#include <typeinfo>
+
+template <typename T> std::string type_name();
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 namespace PROCTOR {
+
 
   class Simulation0D {
     public:
@@ -94,15 +98,14 @@ namespace PROCTOR {
           // initializing containers for the states
           if(_n_singlets>0)
           {
-            _singlet_PES.resize(_n_singlets);
             _singlet_PES_loaded.resize(_n_singlets);
+            std::cout<<" New size:"<<_singlet_PES_loaded.size()<<std::endl;
             // the grid with the PES is not loaded yet.
             for (auto ready : _singlet_PES_loaded)
             { ready=false; }
           }
           if(_n_doublets>0)
           {
-            _doublet_PES.resize(_n_doublets);
             _doublet_PES_loaded.resize(_n_doublets);
             // the grid with the PES is not loaded yet.
             for (auto ready : _doublet_PES_loaded)
@@ -110,7 +113,6 @@ namespace PROCTOR {
           }
           if(_n_triplets>0)
           {
-            _triplet_PES.resize(_n_triplets);
             _triplet_PES_loaded.resize(_n_triplets);
             // the grid with the PES is not loaded yet.
             for (auto ready : _doublet_PES_loaded)
@@ -124,15 +126,16 @@ namespace PROCTOR {
       // Allows loading the initial condition
       void set_initial_wave_packet(int state_idx, std::string electronic_state_type,
           Eigen::Ref<Eigen::VectorXcd> psi_0) {
-        _electronic_wave_packet[electronic_state_type][state_idx] =
-          std::tuple<int, Eigen::VectorXcd>{state_idx, psi_0};
+        _electronic_wave_packet[electronic_state_type].push_back(std::tuple<int, Eigen::VectorXcd>{state_idx, psi_0});
       }
       // Allows load a new PES
       void set_PES(int state_idx, std::string electronic_state_type,
           Eigen::Ref<Eigen::VectorXd> PES) {
         _electronic_PES[electronic_state_type].push_back(
             std::tuple<int, Eigen::VectorXd>{state_idx, PES});
-        _electronic_PES_loaded[electronic_state_type][state_idx]=true;
+        std::cout<<" Size at set_PES:"<< _singlet_PES_loaded.size()<<std::endl;
+        std::cout<<" Size at set_PES using the map:"<< _electronic_PES_loaded[electronic_state_type].size()<<std::endl;
+        //_electronic_PES_loaded[electronic_state_type][state_idx]=true;
       }
       // Allows loading a new DM
       void set_DM(int state_idx, std::string electronic_state_type,
@@ -606,6 +609,10 @@ namespace PROCTOR {
       std::vector<bool> _singlet_PES_loaded;
       std::vector<bool> _doublet_PES_loaded;
       std::vector<bool> _triplet_PES_loaded;
+      std::map<std::string, std::vector<bool>>
+        _electronic_PES_loaded{{"Singlet", _singlet_PES_loaded},
+                               {"Doublet", _doublet_PES_loaded},
+                               {"Triplet", _triplet_PES_loaded}};
       // Container holding the potential energy surfaces (PES)
       // one vector per state type
       std::vector<std::tuple<int, Eigen::VectorXd>> _singlet_PES;
@@ -616,10 +623,6 @@ namespace PROCTOR {
         _electronic_PES{{"Singlet", _singlet_PES},
           {"Doublet", _doublet_PES},
           {"Triplet", _triplet_PES}};
-      std::map<std::string, std::vector<bool>>
-        _electronic_PES_loaded{{"Singlet", _singlet_PES_loaded},
-          {"Doublet", _doublet_PES_loaded},
-          {"Triplet", _triplet_PES_loaded}};
       // Container holding the dipole-moments (DM)
       // one vector per state type
       std::vector<std::tuple<int, Eigen::VectorXd>> _singlet_DM;
