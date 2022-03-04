@@ -27,17 +27,18 @@ PYBIND11_PLUGIN(PROCTOR) {
                     int /*n_grid_points*/, int /*n_singlets*/,
                     int /*n_doublets*/, int /*n_triplets*/>())
       // Expossing the setters
-      .def("set_initial_wave_packet", &Simulation1D::set_initial_wave_packet )
-      .def("set_PES", &Simulation1D::set_PES )
-      .def("set_DM", &Simulation1D::set_DM )
-      .def("set_NACME", &Simulation1D::set_NACME )
-      .def("set_TDM", &Simulation1D::set_TDM )
-      .def("set_SOC", &Simulation1D::set_SOC )
+      .def("set_wave_packet", &Simulation1D::set_wave_packet)
+      .def("set_PES", &Simulation1D::set_PES)
+      .def("set_DM", &Simulation1D::set_DM)
+      .def("set_NACME", &Simulation1D::set_NACME)
+      .def("set_TDM", &Simulation1D::set_TDM)
+      .def("set_SOC", &Simulation1D::set_SOC)
       // Exposing tthe getters
-      .def("electronic_PES_complete", &Simulation1D::electronic_PES_complete )
-      .def("electronic_DM_complete", &Simulation1D::electronic_DM_complete )
-      .def("electronic_TDM_complete", &Simulation1D::electronic_TDM_complete )
-      .def("electronic_NACME_complete", &Simulation1D::electronic_NACME_complete );
+      .def("electronic_PES_complete", &Simulation1D::electronic_PES_complete)
+      .def("electronic_DM_complete", &Simulation1D::electronic_DM_complete)
+      .def("electronic_TDM_complete", &Simulation1D::electronic_TDM_complete)
+      .def("electronic_NACME_complete",
+           &Simulation1D::electronic_NACME_complete);
 
   return mP.ptr();
 }
