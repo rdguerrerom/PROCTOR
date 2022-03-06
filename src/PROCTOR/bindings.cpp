@@ -38,7 +38,13 @@ PYBIND11_PLUGIN(PROCTOR) {
       .def("electronic_DM_complete", &Simulation1D::electronic_DM_complete)
       .def("electronic_TDM_complete", &Simulation1D::electronic_TDM_complete)
       .def("electronic_NACME_complete",
-           &Simulation1D::electronic_NACME_complete);
+           &Simulation1D::electronic_NACME_complete)
+      .def("get_wave_packet", &Simulation1D::get_wave_packet)
+      .def("get_PES", &Simulation1D::get_PES)
+      .def("get_DM", &Simulation1D::get_DM)
+      .def("get_NACME", &Simulation1D::get_NACME)
+      .def("get_TDM", &Simulation1D::get_TDM)
+      .def("get_SOC", &Simulation1D::get_SOC);
 
   return mP.ptr();
 }

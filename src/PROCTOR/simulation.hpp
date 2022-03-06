@@ -100,7 +100,15 @@ public:
   ~Simulation1D() {}
 
   // Setters
-  // Allows loading the initial condition
+  /**
+   * @brief Allows loading a wave packet to the state_idx-th PES of type electronic_state_type.
+   * Being s the  spin quantum number, the string electronic_state_type can be any choice 
+   * between "Singlet"(s=0), "Doublet"(s=1) or "Triplet"(s=2).
+   *
+   * @param state_idx              Index of the PES within all the PES of  type electronic_state_type.
+   * @param electronic_state_type  Which is the spin quantum number of this PES where this wave packet stands. 
+   * @param psi_0                  Wave packet evaluateed on the simulation grid, _x.
+   */
   void set_wave_packet(int state_idx, std::string electronic_state_type,
                        Eigen::Ref<Eigen::VectorXcd> psi_0) {
     bool done = false;
@@ -117,7 +125,15 @@ public:
       _electronic_wave_packet[electronic_state_type].push_back(
           std::tuple<int, Eigen::VectorXcd>{state_idx, psi_0});
   }
-  // Allows load a new PES
+  /**
+   * @brief Allows loading the state_idx-th PES of type electronic_state_type.
+   * Being s the  spin quantum number, the string electronic_state_type can be any choice 
+   * between "Singlet"(s=0), "Doublet"(s=1) or "Triplet"(s=2).
+   *
+   * @param state_idx              Index of the PES within all the PES of  type electronic_state_type.
+   * @param electronic_state_type  Which is the spin quantum number of this PES where this wave packet stands. 
+   * @param PES                    PES evaluateed on the simulation grid, _x.
+   */
   void set_PES(int state_idx, std::string electronic_state_type,
                Eigen::Ref<Eigen::VectorXd> PES) {
     bool done = false;
@@ -148,7 +164,15 @@ public:
     // std::cout<<
     // std::get<1>(_electronic_PES[electronic_state_type].back())<<std::endl;
   }
-  // Allows loading a new DM
+  /**
+   * @brief Allows loading a DM affecting the  state_idx-th PES of type electronic_state_type.
+   * Being s the  spin quantum number, the string electronic_state_type can be any choice 
+   * between "Singlet"(s=0), "Doublet"(s=1) or "Triplet"(s=2).
+   *
+   * @param state_idx              Index of the PES that this DM is affecting.
+   * @param electronic_state_type  Which is the spin quantum number of the PES that this DM is affecting. 
+   * @param PES                    PES evaluated on the simulation grid, _x.
+   */
   void set_DM(int state_idx, std::string electronic_state_type,
               Eigen::Ref<Eigen::VectorXd> DM) {
     bool done = false;
@@ -179,7 +203,16 @@ public:
     // std::cout<<
     // std::get<1>(_electronic_DM[electronic_state_type].back())<<std::endl;
   }
-  // Allows loading a new NACME
+  /**
+   * @brief Allows loading a NACME coupling the  state1_idx and state2_idx PES of type electronic_state_type.
+   * Being s the  spin quantum number, the string electronic_state_type can be any choice 
+   * between "Singlet"(s=0), "Doublet"(s=1) or "Triplet"(s=2).
+   *
+   * @param state1_idx             Index of the first PES that this NACME is affecting.
+   * @param state2_idx             Index of the second PES that this NACME is affecting.
+   * @param electronic_state_type  Which is the spin quantum number of the two PES that this term is affecting.
+   * @param NACME                  NACME evaluated on the simulation grid, _x.
+   */
   void set_NACME(int state1_idx, int state2_idx,
                  std::string electronic_state_type,
                  Eigen::Ref<Eigen::VectorXd> NACME) {
@@ -215,7 +248,16 @@ public:
     // std::cout<<
     // std::get<2>(_electronic_NACME[electronic_state_type].back())<<std::endl;
   }
-  // Allows loading a new TDM
+  /**
+   * @brief Allows loading a TDM coupling the  state1_idx and state2_idx PES of type electronic_state_type.
+   * Being s the  spin quantum number, the string electronic_state_type can be any choice 
+   * between "Singlet"(s=0), "Doublet"(s=1) or "Triplet"(s=2).
+   *
+   * @param state1_idx             Index of the first PES that this TDM is affecting.
+   * @param state2_idx             Index of the second PES that this TDM is affecting.
+   * @param electronic_state_type  Which is the spin quantum number of the two PES that this term is affecting.
+   * @param NACME                  NACME evaluated on the simulation grid, _x.
+   */
   void set_TDM(int state1_idx, int state2_idx,
                std::string electronic_state_type,
                Eigen::Ref<Eigen::VectorXd> TDM) {
@@ -249,7 +291,17 @@ public:
     // std::cout<<
     // std::get<2>(_electronic_TDM[electronic_state_type].back())<<std::endl;
   }
-  // Allows loading a new SOC
+  /**
+   * @brief Allows loading a SOC coupling the  state1_idx of type electronic_state1_type and state2_idx PES of type electronic_state2_type.
+   * Being s the  spin quantum number, the string electronic_state_type can be any choice 
+   * between "Singlet"(s=0), "Doublet"(s=1) or "Triplet"(s=2).
+   *
+   * @param state1_idx               Index of the first PES that this TDM is affecting.
+   * @param state2_idx               Index of the second PES that this TDM is affecting.
+   * @param electronic_state1_type   Type of electronic state of the first PES that this term is coupling.
+   * @param electronic_state2_type   Type of electronic state of the second PES that this term is coupling.
+   * @param SOC                      SOC evaluated on the simulation grid, _x.
+   */
   void set_SOC(int state1_idx, int state2_idx,
                std::string electronic_state1_type,
                std::string electronic_state2_type,
@@ -681,6 +733,130 @@ public:
           return false;
     } else {
       throw std::runtime_error("NACME setup is not supported by this version.");
+    }
+  }
+  /**
+   * @brief Allows getting a wave packet to the state_idx-th PES of type electronic_state_type.
+   * Being s the  spin quantum number, the string electronic_state_type can be any choice 
+   * between "Singlet"(s=0), "Doublet"(s=1) or "Triplet"(s=2).
+   *
+   * @param state_idx              Index of the PES within all the PES of  type electronic_state_type.
+   * @param electronic_state_type  Which is the spin quantum number of this PES where this wave packet stands. 
+   * @param psi_0                  Wave packet evaluateed on the simulation grid, _x.
+   */
+  Eigen::Ref<Eigen::VectorXcd>  get_wave_packet(int state_idx, std::string electronic_state_type,
+                       Eigen::Ref<Eigen::VectorXcd> psi_0) {
+    // check if this key already exist, if so, rewrite it
+    for (std::tuple<int, Eigen::VectorXcd> &wp :
+         _electronic_wave_packet[electronic_state_type]) {
+      if (std::get<0>(wp) == state_idx) 
+        return std::get<1>(wp);
+    }
+  }
+  /**
+   * @brief Allows getting the state_idx-th PES of type electronic_state_type.
+   * Being s the  spin quantum number, the string electronic_state_type can be any choice 
+   * between "Singlet"(s=0), "Doublet"(s=1) or "Triplet"(s=2).
+   *
+   * @param state_idx              Index of the PES within all the PES of  type electronic_state_type.
+   * @param electronic_state_type  Which is the spin quantum number of this PES where this wave packet stands. 
+   * @param PES                    PES evaluateed on the simulation grid, _x.
+   */
+  Eigen::Ref<Eigen::VectorXd>  get_PES(int state_idx, std::string electronic_state_type,
+               Eigen::Ref<Eigen::VectorXd> PES) {
+    bool done = false;
+    // check if this key already exist, if so, rewrite it
+    for (std::tuple<int, Eigen::VectorXd> &pes :
+         _electronic_PES[electronic_state_type]) {
+      if (std::get<0>(pes) == state_idx) {
+        return std::get<1>(pes);
+      }
+    }
+  }
+  /**
+   * @brief Allows getting a DM affecting the  state_idx-th PES of type electronic_state_type.
+   * Being s the  spin quantum number, the string electronic_state_type can be any choice 
+   * between "Singlet"(s=0), "Doublet"(s=1) or "Triplet"(s=2).
+   *
+   * @param state_idx              Index of the PES that this DM is affecting.
+   * @param electronic_state_type  Which is the spin quantum number of the PES that this DM is affecting. 
+   * @param PES                    PES evaluated on the simulation grid, _x.
+   */
+  Eigen::Ref<Eigen::VectorXd> get_DM(int state_idx, std::string electronic_state_type,
+              Eigen::Ref<Eigen::VectorXd> DM) {
+    // check if this key already exist, if so, rewrite it
+    for (std::tuple<int, Eigen::VectorXd> &dm :
+         _electronic_DM[electronic_state_type]) {
+      if (std::get<0>(dm) == state_idx) {
+        return std::get<1>(dm);
+      }
+    }
+  }
+  /**
+   * @brief Allows getting a NACME coupling the  state1_idx and state2_idx PES of type electronic_state_type.
+   * Being s the  spin quantum number, the string electronic_state_type can be any choice 
+   * between "Singlet"(s=0), "Doublet"(s=1) or "Triplet"(s=2).
+   *
+   * @param state1_idx             Index of the first PES that this NACME is affecting.
+   * @param state2_idx             Index of the second PES that this NACME is affecting.
+   * @param electronic_state_type  Which is the spin quantum number of the two PES that this term is affecting.
+   * @param NACME                  NACME evaluated on the simulation grid, _x.
+   */
+  Eigen::Ref<Eigen::VectorXd> get_NACME(int state1_idx, int state2_idx,
+                 std::string electronic_state_type,
+                 Eigen::Ref<Eigen::VectorXd> NACME) {
+    // check if this key already exist, if so, rewrite it
+    for (std::tuple<int, int, Eigen::VectorXd> &nacme :
+         _electronic_NACME[electronic_state_type]) {
+      if (std::get<0>(nacme) == state1_idx &&
+          std::get<1>(nacme) == state2_idx) {
+        return std::get<2>(nacme);
+      }
+    }
+  }
+  /**
+   * @brief Allows getting a TDM coupling the  state1_idx and state2_idx PES of type electronic_state_type.
+   * Being s the  spin quantum number, the string electronic_state_type can be any choice 
+   * between "Singlet"(s=0), "Doublet"(s=1) or "Triplet"(s=2).
+   *
+   * @param state1_idx             Index of the first PES that this TDM is affecting.
+   * @param state2_idx             Index of the second PES that this TDM is affecting.
+   * @param electronic_state_type  Which is the spin quantum number of the two PES that this term is affecting.
+   * @param NACME                  NACME evaluated on the simulation grid, _x.
+   */
+  Eigen::Ref<Eigen::VectorXd> get_TDM(int state1_idx, int state2_idx,
+               std::string electronic_state_type,
+               Eigen::Ref<Eigen::VectorXd> TDM) {
+    // check if this key already exist, if so, rewrite it
+    for (std::tuple<int, int, Eigen::VectorXd> &tdm :
+         _electronic_TDM[electronic_state_type]) {
+      if (std::get<0>(tdm) == state1_idx && std::get<1>(tdm) == state2_idx) {
+        return std::get<2>(tdm);
+      }
+    }
+  }
+  /**
+   * @brief Allows getting a SOC coupling the  state1_idx of type electronic_state1_type and state2_idx PES of type electronic_state2_type.
+   * Being s the  spin quantum number, the string electronic_state_type can be any choice 
+   * between "Singlet"(s=0), "Doublet"(s=1) or "Triplet"(s=2).
+   *
+   * @param state1_idx               Index of the first PES that this TDM is affecting.
+   * @param state2_idx               Index of the second PES that this TDM is affecting.
+   * @param electronic_state1_type   Type of electronic state of the first PES that this term is coupling.
+   * @param electronic_state2_type   Type of electronic state of the second PES that this term is coupling.
+   * @param SOC                      SOC evaluated on the simulation grid, _x.
+   */
+  Eigen::Ref<Eigen::VectorXd> get_SOC(int state1_idx, int state2_idx,
+               std::string electronic_state1_type,
+               std::string electronic_state2_type,
+               Eigen::Ref<Eigen::VectorXd> SOC) {
+    // check if this key already exist, if so, rewrite it
+    for (std::tuple<int, int, Eigen::VectorXd> &soc :
+         _electronic_SOC[std::tuple<std::string, std::string>{
+             electronic_state1_type, electronic_state2_type}]) {
+      if (std::get<0>(soc) == state1_idx && std::get<1>(soc) == state2_idx) {
+        return std::get<2>(soc);
+      }
     }
   }
 
