@@ -3,6 +3,7 @@
 #include <Eigen/Dense>
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 #include <memory>
 #include <numeric>
 #include <stdexcept>
@@ -113,10 +114,9 @@ extern "C" {
               _exp_T(j) = std::complex<double>(cos(theta), sin(theta));
             }
 
-            std::vector<double> test = _suzuki_fractal_decomposition_coeffs(2);
-
+            /*std::vector<double> test = _suzuki_fractal_decomposition_coeffs(6);
             for(auto i:test)
-              std::cout << i << std::endl;
+              std::cout << i << std::endl;*/
 
           }
         // Desstructor
@@ -1153,8 +1153,10 @@ extern "C" {
           }
         }
         /**
-         * @brief Returrns the coefficients to perform the fractal decomposition of an exponential operator.
-         * Suzuki, Masuo. "Fractal decomposition of exponential operators with applications to many-body theories and Monte Carlo simulations." Physics Letters A 146.6 (1990): 319-323.
+         * @brief Returrns the coefficients (Eq. (3) in the reference bellow ) to perform the fractal decomposition of an exponential operator.
+         * 
+         * Suzuki, Masuo. "Fractal decomposition of exponential operators with applications to many-body theories and Monte Carlo simulations." 
+         * Physics Letters A 146.6 (1990): 319-323.
          *
          * @param k  Half of the total order of the desired approximant. 
          *
@@ -1162,6 +1164,7 @@ extern "C" {
          */
         std::vector<double>  _suzuki_fractal_decomposition_coeffs(int k)
         {
+          // recursive generation of the coefficients in Eq. (3)
           if(k<0)
             throw std::runtime_error("Simulation1D::_suzuki_fractal_decomposition_coeffs: k should be a positive integer.");
           if(k==1)
@@ -1169,7 +1172,13 @@ extern "C" {
             return std::vector<double>{1.0}; 
           }else{
             std::vector<double> output;
+            /* Eq. (42)*/
             double p_k = 1.0 / (4.0 - std::pow(4.0 , (1.0 / (2.0 * k - 1.0)) ));
+            /*
+            // This actually match the coefficients in the reference
+            std::cout << std::setprecision(18);
+            std::cout<< "p["<< k <<"]= "<<p_k<<std::endl;
+            */
             std::vector<double> k_th_coeffs = {p_k, p_k, 1.0 - 4.0 * p_k, p_k, p_k};
             for(auto v: k_th_coeffs)
               for(auto sfdc: _suzuki_fractal_decomposition_coeffs(k-1))
