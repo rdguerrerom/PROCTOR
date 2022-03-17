@@ -30,7 +30,7 @@ extern "C" {
         // Destructor
         ~Simulation0D() {}
         // Setters
-        // Geetters
+        // Getters
     };
 
     /**
@@ -57,7 +57,7 @@ extern "C" {
         // Constructor
         Simulation1D() = default;
         /**
-         * @brief Contructor for an empty simulation. The initial state shall be
+         * @brief Constructor for an empty simulation. The initial state shall be
          loaded using a
          * different mechanism.
 
@@ -65,7 +65,7 @@ extern "C" {
          * @param[in] x             Simulation grid for the coordinate provided by the
          user
          * @param[in] dx            Grid spacing
-         * @param[in] dt            Time-step fpr the simulation
+         * @param[in] dt            Time-step for the simulation
          * @param[in] n_grid_points Number of grid points on the simulation grid
          * @param[in] n_singlets    Number of singlet states
          * @param[in] n_doublets    Number of doublet states
@@ -81,21 +81,24 @@ extern "C" {
 
 
             // Default behavior is that  the information for the initial wave packet is 
-            // looaded in position  representation
+            // loaded in position  representation
             _position_representation = true;
             _momentum_representation =  false;
             // resizing containers
+            _grid_idx.resize(_n_grid_points);
+            std::iota( _grid_idx.begin(),  _grid_idx.end(), 0);
+            // total number of PES
             int total_electronic_states = _n_singlets + _n_doublets + _n_triplets;
 
             // populating
             double L = _x(_n_grid_points - 1) - _x(0);
             // step-size in k
             _dk = 2.0 * M_PI / L;
-            // discretization of the corresponding moomeentum
+            // discretization of the corresponding momentum
             std::vector<double> _k;
             // filling the momentum grid
             _k.resize(_n_grid_points);
-            // populating _k with valuues between -_n_grid_points / 2 and _n_grid_points
+            // populating _k with values between -_n_grid_points / 2 and _n_grid_points
             // / 2-1
             std::iota(_k.begin(), _k.end(), (double)(0));
             // _k scaled by _dk
@@ -114,45 +117,19 @@ extern "C" {
               _exp_T(j) = std::complex<double>(cos(theta), sin(theta));
             }
 
-            /*std::vector<double> test = _suzuki_fractal_decomposition_coeffs(6);
+            std::vector<double> test = _suzuki_fractal_decomposition_coeffs(6);
+            /*double count=0;
             for(auto i:test)
-              std::cout << i << std::endl;*/
-
+            {
+              std::cout << i << std::endl;
+              count +=i;
+            }
+            std::cout << "Suzuki accuum: " << count <<std::endl;*/
           }
-        // Desstructor
+        // Destructor
         ~Simulation1D() {}
 
         // Setters
-        void set_dt(double dt)
-        {
-          _dt = dt;
-          // populating
-          double L = _x(_n_grid_points - 1) - _x(0);
-          // step-size in k
-          _dk = 2.0 * M_PI / L;
-          // discretization of the corresponding moomeentum
-          std::vector<double> _k;
-          // filling the momentum grid
-          _k.resize(_n_grid_points);
-          // populating _k with valuues between -_n_grid_points / 2 and _n_grid_points
-          // / 2-1
-          std::iota(_k.begin(), _k.end(), (double)(0));
-          // _k scaled by _dk
-          // fixing capture issues
-          double dK = _dk;
-          int N = _n_grid_points;
-          // see Spectral Methods in MATLAB. Lloyd N. Trefethen, pag 24.
-          std::transform(_k.begin(), _k.end(), _k.begin(),
-              [N, dK](double i) { return i < N / 2 ? i * dK : (i- N ) * dK; });
-          // Filling the kinetic energy 
-          _exp_T.resize(_n_grid_points);
-          for(int j=0; j< _n_grid_points; ++j)
-          {
-            double theta = - _k[j] * _k[j] / (2.0) * (_dt/(2*_hbar));
-            _exp_T(j) = std::complex<double>(cos(theta), sin(theta));
-          }
-
-        }
         /**
          * @brief Allows loading a wave packet to the state_idx-th PES of type electronic_state_type.
          * Being s the  spin quantum number, the string electronic_state_type can be any choice 
@@ -160,7 +137,7 @@ extern "C" {
          *
          * @param state_idx              Index of the PES within all the PES of  type electronic_state_type.
          * @param electronic_state_type  Which is the spin quantum number of this PES where this wave packet stands. 
-         * @param psi_0                  Wave packet evaluateed on the simulation grid, _x.
+         * @param psi_0                  Wave packet evaluated on the simulation grid, _x.
          */
         void set_wave_packet(int state_idx, std::string electronic_state_type,
             Eigen::Ref<Eigen::VectorXcd> psi_0) {
@@ -185,7 +162,7 @@ extern "C" {
          *
          * @param state_idx              Index of the PES within all the PES of  type electronic_state_type.
          * @param electronic_state_type  Which is the spin quantum number of this PES where this wave packet stands. 
-         * @param PES                    PES evaluateed on the simulation grid, _x.
+         * @param PES                    PES evaluated on the simulation grid, _x.
          */
         void set_PES(int state_idx, std::string electronic_state_type,
             Eigen::Ref<Eigen::VectorXd> PES) {
@@ -795,7 +772,7 @@ extern "C" {
          *
          * @param state_idx              Index of the PES within all the PES of  type electronic_state_type.
          * @param electronic_state_type  Which is the spin quantum number of this PES where this wave packet stands. 
-         * @param psi_0                  Wave packet evaluateed on the simulation grid, _x.
+         * @param psi_0                  Wave packet evaluated on the simulation grid, _x.
          */
         Eigen::Ref<Eigen::VectorXcd>  get_wave_packet(int state_idx, std::string electronic_state_type,
             Eigen::Ref<Eigen::VectorXcd> psi_0) {
@@ -813,7 +790,7 @@ extern "C" {
          *
          * @param state_idx              Index of the PES within all the PES of  type electronic_state_type.
          * @param electronic_state_type  Which is the spin quantum number of this PES where this wave packet stands. 
-         * @param PES                    PES evaluateed on the simulation grid, _x.
+         * @param PES                    PES evaluated on the simulation grid, _x.
          */
         Eigen::Ref<Eigen::VectorXd>  get_PES(int state_idx, std::string electronic_state_type,
             Eigen::Ref<Eigen::VectorXd> PES) {
@@ -913,6 +890,97 @@ extern "C" {
           }
         }
 
+
+        void symmetrized_apprroximant(double __dt, double epsilon)
+        {
+          if (_n_singlets > 0 && _n_doublets > 0 && _n_triplets > 0) {
+            // list of states to consider
+            std::vector<std::string> _state_types = {"Singlet", "Doublet", "Triplet"};
+            std::vector<int>  block_sizes = {_n_singlets, _n_doublets, _n_triplets};
+            // beginning of the block for each state type 
+            std::vector<std::tuple<std::string, int> > _blocking{{"Singlet", 0},{"Doublet", _n_singlets},{"Triplet",_n_singlets + _n_doublets}};
+
+            // => From position to momentum representation <= //
+            _transform_to_momentum_representation();
+            // => Propagation corresponding to half kinetic energy operator in momentum representation <= //
+            Eigen::VectorXcd __exp_T = _update_kinetic_exp_operator( __dt );
+            for(auto state:_state_types)
+              for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[state]) {
+                std::get<1>(wp).array() *= __exp_T.array();
+              }
+            // => From position to momentum representation <= //
+            _transform_to_position_representation();
+            // => Propagation corresponding to the potential energy operator <= //
+            for(auto xi: _grid_idx)
+            {
+              // storage for the local wave function
+              Eigen::VectorXcd _psi_loc = Eigen::VectorXcd::Zero(_n_singlets + _n_doublets + _n_triplets);
+              // gathering the local wave function
+              for(std::tuple<std::string, int> block: _blocking)
+                for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[std::get<0>(block)]) {
+                  _psi_loc( std::get<1>(block) + std::get<0>(wp) ) = std::get<1>(wp)(xi);
+                }
+              // storage for the local nonadiabatic potential
+              Eigen::MatrixXcd _V_loc = Eigen::MatrixXcd::Zero(_n_singlets + _n_doublets + _n_triplets, _n_singlets + _n_doublets + _n_triplets);
+              // gathering the local Hamiltonian 
+              for(std::tuple<std::string, int> block1: _blocking)
+              {
+                //PES   
+                for (std::tuple<int, Eigen::VectorXd> &pes1 :
+                    _electronic_PES[std::get<0>(block1)]) 
+                {
+                  // if the PES is loaded, count it
+                  if(std::get<1>(_electronic_PES_loaded[std::get<0>(block1)][std::get<0>(pes1)]))
+                  {
+                    _V_loc(std::get<1>(block1) + std::get<0>(pes1), std::get<1>(block1) + std::get<0>(pes1)) += std::get<1>(pes1)(xi); 
+                    std::cout<< "V [" << std::get<1>(block1) + std::get<0>(pes1) << ", " << std::get<1>(block1) + std::get<0>(pes1) << "]" <<std::endl;
+
+                  }
+                }
+                //DM    
+                for (std::tuple<int, Eigen::VectorXd> &dm1 :
+                    _electronic_DM[std::get<0>(block1)]) 
+                {
+                  _V_loc(std::get<1>(block1) + std::get<0>(dm1), std::get<1>(block1) + std::get<0>(dm1)) += std::get<1>(dm1)(xi); 
+                }
+                //for(std::tuple<std::string, int> block2: _blocking)
+                std::cout<< _V_loc << std::endl;
+                std::cout<< "==========================" <<std::endl;
+              }
+            }
+
+
+
+
+
+
+            // => From position to momentum representation <= //
+            _transform_to_momentum_representation();
+            // => Propagation corresponding to half kinetic energy operator in momentum representation <= //
+            for(auto state:_state_types)
+              for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[state]) {
+                std::get<1>(wp).array() *= __exp_T.array();
+              }
+            // => From position to momentum representation <= //
+            _transform_to_position_representation();
+
+
+          } else if (_n_singlets > 0 && _n_doublets > 0) {
+          
+          } else if (_n_singlets > 0 && _n_triplets > 0) {
+          
+          } else if (_n_doublets > 0 && _n_triplets > 0) {
+          
+          } else if (_n_triplets > 0) {
+          
+          } else if (_n_doublets > 0) {
+          
+          } else if (_n_singlets > 0) {
+
+          }
+        }
+
+
       private:
         // Is the wave packet in position representation?
         bool _position_representation;
@@ -923,6 +991,8 @@ extern "C" {
         int _n_grid_points;
         // discretization of the coordinate
         Eigen::VectorXd _x;
+        // indices for the grid elements
+        std::vector< int > _grid_idx;
         // Kinetic energy discretized on the simlation grid
         Eigen::VectorXcd  _exp_T;
         //  Space discretization step.
@@ -1091,6 +1161,7 @@ extern "C" {
               std::shared_ptr< Eigen::VectorXcd > tmp_psi( new Eigen::VectorXcd(_n_grid_points) );
               *tmp_psi = std::get<1>(wp);
               tmp_psi = PROCTOR::fft1( tmp_psi );
+              tmp_psi->normalize();
               std::get<1>(wp) = *tmp_psi;
             }
 #pragma omp parallel for
@@ -1099,6 +1170,7 @@ extern "C" {
               std::shared_ptr< Eigen::VectorXcd > tmp_psi( new Eigen::VectorXcd(_n_grid_points) );
               *tmp_psi = std::get<1>(wp);
               tmp_psi = PROCTOR::fft1( tmp_psi );
+              tmp_psi->normalize();
               std::get<1>(wp) = *tmp_psi;
             }
 #pragma omp parallel for
@@ -1107,6 +1179,7 @@ extern "C" {
               std::shared_ptr< Eigen::VectorXcd > tmp_psi( new Eigen::VectorXcd(_n_grid_points) );
               *tmp_psi = std::get<1>(wp);
               tmp_psi = PROCTOR::fft1( tmp_psi );
+              tmp_psi->normalize();
               std::get<1>(wp) = *tmp_psi;
             }
             _momentum_representation = true;
@@ -1118,18 +1191,19 @@ extern "C" {
          */
         void _transform_to_position_representation()
         {
-          // if wave packet is ialready in position  representation, do nothing.
+          // if wave packet is already in position  representation, do nothing.
           if(_position_representation && ! _momentum_representation)
           {
             return;
           }else{
-            // transform to momntum representation all the components of the wavepacket 
+            // transform to momentum representation all the components of the wavepacket 
 #pragma omp parallel for
             for (std::tuple<int, Eigen::VectorXcd> &wp :
                 _electronic_wave_packet["Singlet"]) {
               std::shared_ptr< Eigen::VectorXcd > tmp_psi( new Eigen::VectorXcd(_n_grid_points) );
               *tmp_psi = std::get<1>(wp);
               tmp_psi = PROCTOR::inv_fft1( tmp_psi );
+              tmp_psi->normalize();
               std::get<1>(wp) = *tmp_psi;
             }
 #pragma omp parallel for
@@ -1138,6 +1212,7 @@ extern "C" {
               std::shared_ptr< Eigen::VectorXcd > tmp_psi( new Eigen::VectorXcd(_n_grid_points) );
               *tmp_psi = std::get<1>(wp);
               tmp_psi = PROCTOR::inv_fft1( tmp_psi );
+              tmp_psi->normalize();
               std::get<1>(wp) = *tmp_psi;
             }
 #pragma omp parallel for
@@ -1146,6 +1221,7 @@ extern "C" {
               std::shared_ptr< Eigen::VectorXcd > tmp_psi( new Eigen::VectorXcd(_n_grid_points) );
               *tmp_psi = std::get<1>(wp);
               tmp_psi = PROCTOR::inv_fft1( tmp_psi );
+              tmp_psi->normalize();
               std::get<1>(wp) = *tmp_psi;
             }
             _position_representation = true;
@@ -1185,6 +1261,57 @@ extern "C" {
                 output.push_back(v*sfdc);
             return output;
           }
+        }
+        /**
+         * @brief Returns a vector with the exponential of the kinetic energy part of the evolution  operator 
+         * evaluated on a grid in  the momenttum representation. This routine evaluates the formula:
+         *
+         * e^{(x)T},
+         *
+         * with
+         *
+         * x=-i*_hbar*dt
+         *
+         * corresponding to the first factor of Eq.(5) in the reference [1]. 
+         *
+         * [1] Suzuki, Masuo. "Fractal decomposition of exponential operators with applications to many-body theories and Monte Carlo simulations." 
+         * Physics Letters A 146.6 (1990): 319-323.
+         *
+         *
+         * @param dt
+         *
+         * @return 
+         */
+        Eigen::VectorXcd  _update_kinetic_exp_operator(double dt)
+        {
+          _dt = dt;
+          // populating
+          double L = _x(_n_grid_points - 1) - _x(0);
+          // step-size in k
+          _dk = 2.0 * M_PI / L;
+          // discretization of the corresponding moomeentum
+          std::vector<double> _k;
+          // filling the momentum grid
+          _k.resize(_n_grid_points);
+          // populating _k with valuues between -_n_grid_points / 2 and _n_grid_points
+          // / 2-1
+          std::iota(_k.begin(), _k.end(), (double)(0));
+          // _k scaled by _dk
+          // fixing capture issues
+          double dK = _dk;
+          int N = _n_grid_points;
+          // see Spectral Methods in MATLAB. Lloyd N. Trefethen, pag 24.
+          std::transform(_k.begin(), _k.end(), _k.begin(),
+              [N, dK](double i) { return i < N / 2 ? i * dK : (i- N ) * dK; });
+          // __exp_T = e^(-i*dt*T/2) 
+          Eigen::VectorXcd  __exp_T;
+          __exp_T.resize(_n_grid_points);
+          for(int j=0; j< _n_grid_points; ++j)
+          {
+            double theta = - _k[j] * _k[j] / (2.0) * (_dt/(2*_hbar));
+            __exp_T(j) = std::complex<double>(cos(theta), sin(theta));
+          }
+          return __exp_T;
         }
 
     };

@@ -44,6 +44,7 @@ PYBIND11_PLUGIN(PROCTOR) {
       .def("get_DM", &Simulation1D::get_DM)
       .def("get_NACME", &Simulation1D::get_NACME)
       .def("get_TDM", &Simulation1D::get_TDM)
+      .def("symmetrized_apprroximant", &Simulation1D::symmetrized_apprroximant)
       .def("get_SOC", &Simulation1D::get_SOC);
 
   return mP.ptr();
