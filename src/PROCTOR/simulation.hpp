@@ -130,6 +130,15 @@ public:
   ~Simulation1D() {}
 
   // Setters
+  void set_suzuki_order(int n)
+  {
+    if(n % 2 == 0)
+    {
+    _suzuki_fractal_order = n/2;
+    } else {
+    _suzuki_fractal_order = n/2 +1 ;
+    }
+  }
   /**
    * @brief Allows loading a wave packet to the state_idx-th PES of type
    * electronic_state_type. Being s the  spin quantum number, the string
@@ -936,6 +945,378 @@ public:
     }
   }
 
+  // Controls
+  void step_forward(double _dt)
+  {
+    std::vector<double> pn = _suzuki_fractal_decomposition_coeffs(_suzuki_fractal_order);
+
+  }
+
+private:
+  // simlation time
+  double simulation_time = 0;
+  // Is the wave packet in position representation?
+  bool _position_representation;
+  // Is the wave packet in momentum representation?
+  bool _momentum_representation;
+
+  // Number of points in the grid.
+  int _n_grid_points;
+  // discretization of the coordinate
+  Eigen::VectorXd _x;
+  // indices for the grid elements
+  std::vector<int> _grid_idx;
+  // Kinetic energy discretized on the simlation grid
+  Eigen::VectorXcd _exp_T;
+  //  Space discretization step.
+  double _dx;
+  //  Momentum discretization step.
+  double _dk;
+  // Time discretization step.
+  double _dt;
+  // Kinetic energy operator
+  Eigen::VectorXd _kin;
+  // hbar
+  double _hbar = 1.0; // using atomic units by default.
+                      // PES that we are considering.
+                      // Number of singlets
+  int _n_singlets;
+  // Number of doublets
+  int _n_doublets;
+  // Number of triplets
+  int _n_triplets;
+  // set true if the setup of the electronic structre is coomplete
+  bool _electronic_structure_ready;
+  // electronic Hamiltonian
+  Eigen::MatrixXcd _electronic_H;
+  // Handler for bookkeeping the blocking of the Hamiltonian
+  std::map<std::tuple<std::string, std::string>, Eigen::MatrixXcd> _eH_Block;
+
+  // electronic wave packets per electronic state type
+  std::vector<std::tuple<int, Eigen::VectorXcd>> _singlet_psi;
+  std::vector<std::tuple<int, Eigen::VectorXcd>> _doublet_psi;
+  std::vector<std::tuple<int, Eigen::VectorXcd>> _triplet_psi;
+  std::map<std::string, std::vector<std::tuple<int, Eigen::VectorXcd>>>
+      _electronic_wave_packet{{"Singlet", _singlet_psi},
+                              {"Doublet", _doublet_psi},
+                              {"Triplet", _triplet_psi}};
+  // Zero-based lists of unique indices for the electronic states
+  // List of singlets
+  std::vector<int> _singlet_list;
+  // List of doblets
+  std::vector<int> _doublet_list;
+  // List of triplets
+  std::vector<int> _triplet_list;
+  // keep track if every state have being loaded
+  std::vector<std::tuple<int, bool>> _singlet_PES_loaded;
+  std::vector<std::tuple<int, bool>> _doublet_PES_loaded;
+  std::vector<std::tuple<int, bool>> _triplet_PES_loaded;
+  std::map<std::string, std::vector<std::tuple<int, bool>>>
+      _electronic_PES_loaded{{"Singlet", _singlet_PES_loaded},
+                             {"Doublet", _doublet_PES_loaded},
+                             {"Triplet", _triplet_PES_loaded}};
+  // Container holding the potential energy surfaces (PES)
+  // one vector per state type
+  std::vector<std::tuple<int, Eigen::VectorXd>> _singlet_PES;
+  std::vector<std::tuple<int, Eigen::VectorXd>> _doublet_PES;
+  std::vector<std::tuple<int, Eigen::VectorXd>> _triplet_PES;
+  // Handlers for bookkeeping the PES
+  std::map<std::string, std::vector<std::tuple<int, Eigen::VectorXd>>>
+      _electronic_PES{{"Singlet", _singlet_PES},
+                      {"Doublet", _doublet_PES},
+                      {"Triplet", _triplet_PES}};
+  // Container holding the dipole-moments (DM)
+  // one vector per state type
+  std::vector<std::tuple<int, Eigen::VectorXd>> _singlet_DM;
+  std::vector<std::tuple<int, Eigen::VectorXd>> _doublet_DM;
+  std::vector<std::tuple<int, Eigen::VectorXd>> _triplet_DM;
+  // keep track if every DM have being loaded
+  std::vector<std::tuple<int, bool>> _singlet_DM_loaded;
+  std::vector<std::tuple<int, bool>> _doublet_DM_loaded;
+  std::vector<std::tuple<int, bool>> _triplet_DM_loaded;
+  // Handlers for bookkeeping the DM
+  std::map<std::string, std::vector<std::tuple<int, Eigen::VectorXd>>>
+      _electronic_DM{{"Singlet", _singlet_DM},
+                     {"Doublet", _doublet_DM},
+                     {"Triplet", _triplet_DM}};
+  std::map<std::string, std::vector<std::tuple<int, bool>>>
+      _electronic_DM_loaded{{"Singlet", _singlet_DM_loaded},
+                            {"Doublet", _doublet_DM_loaded},
+                            {"Triplet", _triplet_DM_loaded}};
+  // Container holding the non-adiabatic coupling matrix elements (NACMEs)
+  // The indices of the two states that the NACME is coupling should be of the
+  // same type
+  std::vector<std::tuple<int, int, Eigen::VectorXd>> _singlet_NACME;
+  std::vector<std::tuple<int, int, Eigen::VectorXd>> _doublet_NACME;
+  std::vector<std::tuple<int, int, Eigen::VectorXd>> _triplet_NACME;
+  // keep track if every NACME have being loaded
+  std::vector<std::tuple<int, int, bool>> _singlet_NACME_loaded;
+  std::vector<std::tuple<int, int, bool>> _doublet_NACME_loaded;
+  std::vector<std::tuple<int, int, bool>> _triplet_NACME_loaded;
+  // Handlers for bookkeeping the NACME
+  std::map<std::string, std::vector<std::tuple<int, int, Eigen::VectorXd>>>
+      _electronic_NACME{{"Singlet", _singlet_NACME},
+                        {"Doublet", _doublet_NACME},
+                        {"Triplet", _triplet_NACME}};
+  std::map<std::string, std::vector<std::tuple<int, int, bool>>>
+      _electronic_NACME_loaded{{"Singlet", _singlet_NACME_loaded},
+                               {"Doublet", _doublet_NACME_loaded},
+                               {"Triplet", _triplet_NACME_loaded}};
+  // Containers holding the transition dipole moments (TDM)
+  // The indices of the two states that the TDM is coupling should be of the
+  // same type
+  std::vector<std::tuple<int, int, Eigen::VectorXd>> _singlet_TDM;
+  std::vector<std::tuple<int, int, Eigen::VectorXd>> _doublet_TDM;
+  std::vector<std::tuple<int, int, Eigen::VectorXd>> _triplet_TDM;
+  // keep track if every TDM have being loaded
+  std::vector<std::tuple<int, int, bool>> _singlet_TDM_loaded;
+  std::vector<std::tuple<int, int, bool>> _doublet_TDM_loaded;
+  std::vector<std::tuple<int, int, bool>> _triplet_TDM_loaded;
+  // Handlers for bookkeeping the TDM
+  std::map<std::string, std::vector<std::tuple<int, int, Eigen::VectorXd>>>
+      _electronic_TDM{{"Singlet", _singlet_TDM},
+                      {"Doublet", _doublet_TDM},
+                      {"Triplet", _triplet_TDM}};
+  std::map<std::string, std::vector<std::tuple<int, int, bool>>>
+      _electronic_TDM_loaded{{"Singlet", _singlet_TDM_loaded},
+                             {"Doublet", _doublet_TDM_loaded},
+                             {"Triplet", _triplet_TDM_loaded}};
+  // Container holding the SOCs
+  // The indices of the two states that the SOC is coupling should be of the
+  // different type.
+  std::vector<std::tuple<int, int, Eigen::VectorXd>> _singlet_doublet_SOC;
+  std::vector<std::tuple<int, int, Eigen::VectorXd>> _singlet_triplet_SOC;
+  std::vector<std::tuple<int, int, Eigen::VectorXd>> _doublet_triplet_SOC;
+  // keep track if every SOC have being loaded
+  std::vector<std::tuple<int, int, bool>> _singlet_doublet_SOC_loaded;
+  std::vector<std::tuple<int, int, bool>> _singlet_triplet_SOC_loaded;
+  std::vector<std::tuple<int, int, bool>> _doublet_triplet_SOC_loaded;
+  // Handlers for bookkeeping the SOC
+  std::map<std::tuple<std::string, std::string>,
+           std::vector<std::tuple<int, int, Eigen::VectorXd>>>
+      _electronic_SOC{{{"Singlet", "Doublet"}, _singlet_doublet_SOC},
+                      {{"Singlet", "Triplet"}, _singlet_triplet_SOC},
+                      {{"Doublet", "Triplet"}, _doublet_triplet_SOC}};
+  std::map<std::tuple<std::string, std::string>,
+           std::vector<std::tuple<int, int, bool>>>
+      _electronic_SOC_loaded{
+          {{"Singlet", "Doublet"}, _singlet_doublet_SOC_loaded},
+          {{"Singlet", "Triplet"}, _singlet_triplet_SOC_loaded},
+          {{"Doublet", "Triplet"}, _doublet_triplet_SOC_loaded}};
+
+  // Quantum dynamics related containers
+  // Wave packet propagation mode
+  std::map<std::string, int> propagation_mode{{"forward", 0}, {"backward", 1}};
+  int _prop_mode;
+  // Wave packet propagation scheme
+  // only unitary and  symplectic schemes will be implemented.
+  std::map<std::string, int> propagation_method{
+      {"implicit midpoint", 2}, {"Crank-Nicolson", 1}, {"Suzuki-fractal", 0}};
+  // desired order of accuuracy to achive using Suzuki fractal decomposition method.
+  int _suzuki_fractal_order = 3;
+  // weights for the Suzuki fractal decomposition method.
+  std::vector<double> _pn;
+  // list of times to evaluate the time dependent perturbation to be used with
+  // the Suzuki fractal decomposition method.
+  std::vector<double> _suzuki_fractal_perturbation_eval;
+
+  int _prop_method;
+  // set true if the setup of the propagation scheme is complete
+  bool _propagations_scheme_ready;
+  // Internal methods
+
+  /**
+   * @brief Changes the representation of the wave packet to momentum.
+   */
+  void _transform_to_momentum_representation() {
+    // if wave packet is ialready in momentum representation, do nothing.
+    if (_momentum_representation && !_position_representation) {
+      return;
+    } else {
+      // transform to momntum representation all the components of the
+      // wavepacket
+#pragma omp parallel for
+      for (std::tuple<int, Eigen::VectorXcd> &wp :
+           _electronic_wave_packet["Singlet"]) {
+        std::shared_ptr<Eigen::VectorXcd> tmp_psi(
+            new Eigen::VectorXcd(_n_grid_points));
+        *tmp_psi = std::get<1>(wp);
+        tmp_psi = PROCTOR::fft1(tmp_psi);
+        tmp_psi->normalize();
+        std::get<1>(wp) = *tmp_psi;
+      }
+#pragma omp parallel for
+      for (std::tuple<int, Eigen::VectorXcd> &wp :
+           _electronic_wave_packet["Doublet"]) {
+        std::shared_ptr<Eigen::VectorXcd> tmp_psi(
+            new Eigen::VectorXcd(_n_grid_points));
+        *tmp_psi = std::get<1>(wp);
+        tmp_psi = PROCTOR::fft1(tmp_psi);
+        tmp_psi->normalize();
+        std::get<1>(wp) = *tmp_psi;
+      }
+#pragma omp parallel for
+      for (std::tuple<int, Eigen::VectorXcd> &wp :
+           _electronic_wave_packet["triplet"]) {
+        std::shared_ptr<Eigen::VectorXcd> tmp_psi(
+            new Eigen::VectorXcd(_n_grid_points));
+        *tmp_psi = std::get<1>(wp);
+        tmp_psi = PROCTOR::fft1(tmp_psi);
+        tmp_psi->normalize();
+        std::get<1>(wp) = *tmp_psi;
+      }
+      _momentum_representation = true;
+      _position_representation = false;
+    }
+  }
+  /**
+   * @brief Changes the representation of the wave packet to poosition.
+   */
+  void _transform_to_position_representation() {
+    // if wave packet is already in position  representation, do nothing.
+    if (_position_representation && !_momentum_representation) {
+      return;
+    } else {
+      // transform to momentum representation all the components of the
+      // wavepacket
+#pragma omp parallel for
+      for (std::tuple<int, Eigen::VectorXcd> &wp :
+           _electronic_wave_packet["Singlet"]) {
+        std::shared_ptr<Eigen::VectorXcd> tmp_psi(
+            new Eigen::VectorXcd(_n_grid_points));
+        *tmp_psi = std::get<1>(wp);
+        tmp_psi = PROCTOR::inv_fft1(tmp_psi);
+        tmp_psi->normalize();
+        std::get<1>(wp) = *tmp_psi;
+      }
+#pragma omp parallel for
+      for (std::tuple<int, Eigen::VectorXcd> &wp :
+           _electronic_wave_packet["Doublet"]) {
+        std::shared_ptr<Eigen::VectorXcd> tmp_psi(
+            new Eigen::VectorXcd(_n_grid_points));
+        *tmp_psi = std::get<1>(wp);
+        tmp_psi = PROCTOR::inv_fft1(tmp_psi);
+        tmp_psi->normalize();
+        std::get<1>(wp) = *tmp_psi;
+      }
+#pragma omp parallel for
+      for (std::tuple<int, Eigen::VectorXcd> &wp :
+           _electronic_wave_packet["triplet"]) {
+        std::shared_ptr<Eigen::VectorXcd> tmp_psi(
+            new Eigen::VectorXcd(_n_grid_points));
+        *tmp_psi = std::get<1>(wp);
+        tmp_psi = PROCTOR::inv_fft1(tmp_psi);
+        tmp_psi->normalize();
+        std::get<1>(wp) = *tmp_psi;
+      }
+      _position_representation = true;
+      _momentum_representation = false;
+    }
+  }
+  /**
+   * @brief Returrns the coefficients (Eq. (3) in the reference bellow ) to
+   * perform the fractal decomposition of an exponential operator.
+   *
+   * Suzuki, Masuo. "Fractal decomposition of exponential operators with
+   * applications to many-body theories and Monte Carlo simulations." Physics
+   * Letters A 146.6 (1990): 319-323.
+   *
+   * @param k  Half of the total order of the desired approximant.
+   *
+   * @return list of coefficients to accomplish the of 2kth order approximant of
+   * the exponential operator.
+   */
+  std::vector<double> _suzuki_fractal_decomposition_coeffs(int k) {
+    // recursive generation of the coefficients in Eq. (3)
+    if (k < 0)
+      throw std::runtime_error("Simulation1D::_suzuki_fractal_decomposition_"
+                               "coeffs: k should be a positive integer.");
+    if (k == 1) {
+      return std::vector<double>{1.0};
+    } else {
+      std::vector<double> output;
+      /* Eq. (42)*/
+      double p_k = 1.0 / (4.0 - std::pow(4.0, (1.0 / (2.0 * k - 1.0))));
+      /*
+      // This actually match the coefficients in the reference
+      std::cout << std::setprecision(18);
+      std::cout<< "p["<< k <<"]= "<<p_k<<std::endl;
+      */
+      std::vector<double> k_th_coeffs = {p_k, p_k, 1.0 - 4.0 * p_k, p_k, p_k};
+      for (auto v : k_th_coeffs)
+        for (auto sfdc : _suzuki_fractal_decomposition_coeffs(k - 1))
+          output.push_back(v * sfdc);
+      return output;
+    }
+  }
+  /**
+   * @brief Returns a vector with the exponential of the kinetic energy part of
+   * the evolution  operator evaluated on a grid in  the momenttum
+   * representation. This routine evaluates the formula:
+   *
+   * e^{(x)T},
+   *
+   * with
+   *
+   * x=-i*_hbar*dt
+   *
+   * corresponding to the first factor of Eq.(5) in the reference [1].
+   *
+   * [1] Suzuki, Masuo. "Fractal decomposition of exponential operators with
+   * applications to many-body theories and Monte Carlo simulations." Physics
+   * Letters A 146.6 (1990): 319-323.
+   *
+   *
+   * @param dt
+   *
+   * @return
+   */
+  Eigen::VectorXcd _update_kinetic_exp_operator(double dt) {
+    _dt = dt;
+    // populating
+    double L = _x(_n_grid_points - 1) - _x(0);
+    // step-size in k
+    _dk = 2.0 * M_PI / L;
+    // discretization of the corresponding moomeentum
+    std::vector<double> _k;
+    // filling the momentum grid
+    _k.resize(_n_grid_points);
+    // populating _k with valuues between -_n_grid_points / 2 and _n_grid_points
+    // / 2-1
+    std::iota(_k.begin(), _k.end(), (double)(0));
+    // _k scaled by _dk
+    // fixing capture issues
+    double dK = _dk;
+    int N = _n_grid_points;
+    // see Spectral Methods in MATLAB. Lloyd N. Trefethen, pag 24.
+    std::transform(_k.begin(), _k.end(), _k.begin(), [N, dK](double i) {
+      return i < N / 2 ? i * dK : (i - N) * dK;
+    });
+    // __exp_T = e^(-i*dt*T/2)
+    Eigen::VectorXcd __exp_T;
+    __exp_T.resize(_n_grid_points);
+    for (int j = 0; j < _n_grid_points; ++j) {
+      double theta = -_k[j] * _k[j] / (2.0) * (_dt / (2 * _hbar));
+      __exp_T(j) = std::complex<double>(cos(theta), sin(theta));
+    }
+    return __exp_T;
+  }
+  /**
+   * @brief Symmetrized approximant to the timee-evolution opertator
+   * Current implementation is based on the following references:
+   *
+   * [1] Alvarellos, José, and Horia Metiu. 
+   * "The evolution of the wave function in a curve crossing problem computed by a fast Fourier transform method." 
+   * The Journal of chemical physics 88.8 (1988): 4957-4966.
+   *
+   * [2] Hatano, Naomichi, and Masuo Suzuki. 
+   * "Finding exponential product formulas of higher orders." Quantum annealing and other optimization methods. 
+   * Springer, Berlin, Heidelberg, 2005. 37-68.
+   *
+   *
+   * @param __dt       Time-step for setting up the approximant.
+   * @param __epsilon  Electric field compnent of the external light pulse that is interacting with the wave packet.
+   */
   void symmetrized_apprroximant(double __dt, double __epsilon) {
     if (_n_singlets > 0 && _n_doublets > 0 && _n_triplets > 0) {
       // => BEGIN <= //
@@ -1817,346 +2198,6 @@ public:
       _transform_to_position_representation();
       // => BEGIN <= //
     }
-  }
-
-private:
-  // Is the wave packet in position representation?
-  bool _position_representation;
-  // Is the wave packet in momentum representation?
-  bool _momentum_representation;
-
-  // Number of points in the grid.
-  int _n_grid_points;
-  // discretization of the coordinate
-  Eigen::VectorXd _x;
-  // indices for the grid elements
-  std::vector<int> _grid_idx;
-  // Kinetic energy discretized on the simlation grid
-  Eigen::VectorXcd _exp_T;
-  //  Space discretization step.
-  double _dx;
-  //  Momentum discretization step.
-  double _dk;
-  // Time discretization step.
-  double _dt;
-  // Kinetic energy operator
-  Eigen::VectorXd _kin;
-  // hbar
-  double _hbar = 1.0; // using atomic units by default.
-                      // PES that we are considering.
-                      // Number of singlets
-  int _n_singlets;
-  // Number of doublets
-  int _n_doublets;
-  // Number of triplets
-  int _n_triplets;
-  // set true if the setup of the electronic structre is coomplete
-  bool _electronic_structure_ready;
-  // electronic Hamiltonian
-  Eigen::MatrixXcd _electronic_H;
-  // Handler for bookkeeping the blocking of the Hamiltonian
-  std::map<std::tuple<std::string, std::string>, Eigen::MatrixXcd> _eH_Block;
-
-  // electronic wave packets per electronic state type
-  std::vector<std::tuple<int, Eigen::VectorXcd>> _singlet_psi;
-  std::vector<std::tuple<int, Eigen::VectorXcd>> _doublet_psi;
-  std::vector<std::tuple<int, Eigen::VectorXcd>> _triplet_psi;
-  std::map<std::string, std::vector<std::tuple<int, Eigen::VectorXcd>>>
-      _electronic_wave_packet{{"Singlet", _singlet_psi},
-                              {"Doublet", _doublet_psi},
-                              {"Triplet", _triplet_psi}};
-  // Zero-based lists of unique indices for the electronic states
-  // List of singlets
-  std::vector<int> _singlet_list;
-  // List of doblets
-  std::vector<int> _doublet_list;
-  // List of triplets
-  std::vector<int> _triplet_list;
-  // keep track if every state have being loaded
-  std::vector<std::tuple<int, bool>> _singlet_PES_loaded;
-  std::vector<std::tuple<int, bool>> _doublet_PES_loaded;
-  std::vector<std::tuple<int, bool>> _triplet_PES_loaded;
-  std::map<std::string, std::vector<std::tuple<int, bool>>>
-      _electronic_PES_loaded{{"Singlet", _singlet_PES_loaded},
-                             {"Doublet", _doublet_PES_loaded},
-                             {"Triplet", _triplet_PES_loaded}};
-  // Container holding the potential energy surfaces (PES)
-  // one vector per state type
-  std::vector<std::tuple<int, Eigen::VectorXd>> _singlet_PES;
-  std::vector<std::tuple<int, Eigen::VectorXd>> _doublet_PES;
-  std::vector<std::tuple<int, Eigen::VectorXd>> _triplet_PES;
-  // Handlers for bookkeeping the PES
-  std::map<std::string, std::vector<std::tuple<int, Eigen::VectorXd>>>
-      _electronic_PES{{"Singlet", _singlet_PES},
-                      {"Doublet", _doublet_PES},
-                      {"Triplet", _triplet_PES}};
-  // Container holding the dipole-moments (DM)
-  // one vector per state type
-  std::vector<std::tuple<int, Eigen::VectorXd>> _singlet_DM;
-  std::vector<std::tuple<int, Eigen::VectorXd>> _doublet_DM;
-  std::vector<std::tuple<int, Eigen::VectorXd>> _triplet_DM;
-  // keep track if every DM have being loaded
-  std::vector<std::tuple<int, bool>> _singlet_DM_loaded;
-  std::vector<std::tuple<int, bool>> _doublet_DM_loaded;
-  std::vector<std::tuple<int, bool>> _triplet_DM_loaded;
-  // Handlers for bookkeeping the DM
-  std::map<std::string, std::vector<std::tuple<int, Eigen::VectorXd>>>
-      _electronic_DM{{"Singlet", _singlet_DM},
-                     {"Doublet", _doublet_DM},
-                     {"Triplet", _triplet_DM}};
-  std::map<std::string, std::vector<std::tuple<int, bool>>>
-      _electronic_DM_loaded{{"Singlet", _singlet_DM_loaded},
-                            {"Doublet", _doublet_DM_loaded},
-                            {"Triplet", _triplet_DM_loaded}};
-  // Container holding the non-adiabatic coupling matrix elements (NACMEs)
-  // The indices of the two states that the NACME is coupling should be of the
-  // same type
-  std::vector<std::tuple<int, int, Eigen::VectorXd>> _singlet_NACME;
-  std::vector<std::tuple<int, int, Eigen::VectorXd>> _doublet_NACME;
-  std::vector<std::tuple<int, int, Eigen::VectorXd>> _triplet_NACME;
-  // keep track if every NACME have being loaded
-  std::vector<std::tuple<int, int, bool>> _singlet_NACME_loaded;
-  std::vector<std::tuple<int, int, bool>> _doublet_NACME_loaded;
-  std::vector<std::tuple<int, int, bool>> _triplet_NACME_loaded;
-  // Handlers for bookkeeping the NACME
-  std::map<std::string, std::vector<std::tuple<int, int, Eigen::VectorXd>>>
-      _electronic_NACME{{"Singlet", _singlet_NACME},
-                        {"Doublet", _doublet_NACME},
-                        {"Triplet", _triplet_NACME}};
-  std::map<std::string, std::vector<std::tuple<int, int, bool>>>
-      _electronic_NACME_loaded{{"Singlet", _singlet_NACME_loaded},
-                               {"Doublet", _doublet_NACME_loaded},
-                               {"Triplet", _triplet_NACME_loaded}};
-  // Containers holding the transition dipole moments (TDM)
-  // The indices of the two states that the TDM is coupling should be of the
-  // same type
-  std::vector<std::tuple<int, int, Eigen::VectorXd>> _singlet_TDM;
-  std::vector<std::tuple<int, int, Eigen::VectorXd>> _doublet_TDM;
-  std::vector<std::tuple<int, int, Eigen::VectorXd>> _triplet_TDM;
-  // keep track if every TDM have being loaded
-  std::vector<std::tuple<int, int, bool>> _singlet_TDM_loaded;
-  std::vector<std::tuple<int, int, bool>> _doublet_TDM_loaded;
-  std::vector<std::tuple<int, int, bool>> _triplet_TDM_loaded;
-  // Handlers for bookkeeping the TDM
-  std::map<std::string, std::vector<std::tuple<int, int, Eigen::VectorXd>>>
-      _electronic_TDM{{"Singlet", _singlet_TDM},
-                      {"Doublet", _doublet_TDM},
-                      {"Triplet", _triplet_TDM}};
-  std::map<std::string, std::vector<std::tuple<int, int, bool>>>
-      _electronic_TDM_loaded{{"Singlet", _singlet_TDM_loaded},
-                             {"Doublet", _doublet_TDM_loaded},
-                             {"Triplet", _triplet_TDM_loaded}};
-  // Container holding the SOCs
-  // The indices of the two states that the SOC is coupling should be of the
-  // different type.
-  std::vector<std::tuple<int, int, Eigen::VectorXd>> _singlet_doublet_SOC;
-  std::vector<std::tuple<int, int, Eigen::VectorXd>> _singlet_triplet_SOC;
-  std::vector<std::tuple<int, int, Eigen::VectorXd>> _doublet_triplet_SOC;
-  // keep track if every SOC have being loaded
-  std::vector<std::tuple<int, int, bool>> _singlet_doublet_SOC_loaded;
-  std::vector<std::tuple<int, int, bool>> _singlet_triplet_SOC_loaded;
-  std::vector<std::tuple<int, int, bool>> _doublet_triplet_SOC_loaded;
-  // Handlers for bookkeeping the SOC
-  std::map<std::tuple<std::string, std::string>,
-           std::vector<std::tuple<int, int, Eigen::VectorXd>>>
-      _electronic_SOC{{{"Singlet", "Doublet"}, _singlet_doublet_SOC},
-                      {{"Singlet", "Triplet"}, _singlet_triplet_SOC},
-                      {{"Doublet", "Triplet"}, _doublet_triplet_SOC}};
-  std::map<std::tuple<std::string, std::string>,
-           std::vector<std::tuple<int, int, bool>>>
-      _electronic_SOC_loaded{
-          {{"Singlet", "Doublet"}, _singlet_doublet_SOC_loaded},
-          {{"Singlet", "Triplet"}, _singlet_triplet_SOC_loaded},
-          {{"Doublet", "Triplet"}, _doublet_triplet_SOC_loaded}};
-
-  // Quantum dynamics related containers
-  // Wave packet propagation mode
-  std::map<std::string, int> propagation_mode{{"forward", 0}, {"backward", 1}};
-  int _prop_mode;
-  // Wave packet propagation scheme
-  // only unitary and  symplectic schemes will be implemented.
-  std::map<std::string, int> propagation_method{
-      {"implicit midpoint", 0}, {"Crank-Nicolson", 1}, {"Suzuki-Trotter", 2}};
-  int _prop_method;
-  // set true if the setup of the propagation scheme is complete
-  bool _propagations_scheme_ready;
-  // Internal methods
-
-  /**
-   * @brief Changes the representation of the wave packet to momentum.
-   */
-  void _transform_to_momentum_representation() {
-    // if wave packet is ialready in momentum representation, do nothing.
-    if (_momentum_representation && !_position_representation) {
-      return;
-    } else {
-      // transform to momntum representation all the components of the
-      // wavepacket
-#pragma omp parallel for
-      for (std::tuple<int, Eigen::VectorXcd> &wp :
-           _electronic_wave_packet["Singlet"]) {
-        std::shared_ptr<Eigen::VectorXcd> tmp_psi(
-            new Eigen::VectorXcd(_n_grid_points));
-        *tmp_psi = std::get<1>(wp);
-        tmp_psi = PROCTOR::fft1(tmp_psi);
-        tmp_psi->normalize();
-        std::get<1>(wp) = *tmp_psi;
-      }
-#pragma omp parallel for
-      for (std::tuple<int, Eigen::VectorXcd> &wp :
-           _electronic_wave_packet["Doublet"]) {
-        std::shared_ptr<Eigen::VectorXcd> tmp_psi(
-            new Eigen::VectorXcd(_n_grid_points));
-        *tmp_psi = std::get<1>(wp);
-        tmp_psi = PROCTOR::fft1(tmp_psi);
-        tmp_psi->normalize();
-        std::get<1>(wp) = *tmp_psi;
-      }
-#pragma omp parallel for
-      for (std::tuple<int, Eigen::VectorXcd> &wp :
-           _electronic_wave_packet["triplet"]) {
-        std::shared_ptr<Eigen::VectorXcd> tmp_psi(
-            new Eigen::VectorXcd(_n_grid_points));
-        *tmp_psi = std::get<1>(wp);
-        tmp_psi = PROCTOR::fft1(tmp_psi);
-        tmp_psi->normalize();
-        std::get<1>(wp) = *tmp_psi;
-      }
-      _momentum_representation = true;
-      _position_representation = false;
-    }
-  }
-  /**
-   * @brief Changes the representation of the wave packet to poosition.
-   */
-  void _transform_to_position_representation() {
-    // if wave packet is already in position  representation, do nothing.
-    if (_position_representation && !_momentum_representation) {
-      return;
-    } else {
-      // transform to momentum representation all the components of the
-      // wavepacket
-#pragma omp parallel for
-      for (std::tuple<int, Eigen::VectorXcd> &wp :
-           _electronic_wave_packet["Singlet"]) {
-        std::shared_ptr<Eigen::VectorXcd> tmp_psi(
-            new Eigen::VectorXcd(_n_grid_points));
-        *tmp_psi = std::get<1>(wp);
-        tmp_psi = PROCTOR::inv_fft1(tmp_psi);
-        tmp_psi->normalize();
-        std::get<1>(wp) = *tmp_psi;
-      }
-#pragma omp parallel for
-      for (std::tuple<int, Eigen::VectorXcd> &wp :
-           _electronic_wave_packet["Doublet"]) {
-        std::shared_ptr<Eigen::VectorXcd> tmp_psi(
-            new Eigen::VectorXcd(_n_grid_points));
-        *tmp_psi = std::get<1>(wp);
-        tmp_psi = PROCTOR::inv_fft1(tmp_psi);
-        tmp_psi->normalize();
-        std::get<1>(wp) = *tmp_psi;
-      }
-#pragma omp parallel for
-      for (std::tuple<int, Eigen::VectorXcd> &wp :
-           _electronic_wave_packet["triplet"]) {
-        std::shared_ptr<Eigen::VectorXcd> tmp_psi(
-            new Eigen::VectorXcd(_n_grid_points));
-        *tmp_psi = std::get<1>(wp);
-        tmp_psi = PROCTOR::inv_fft1(tmp_psi);
-        tmp_psi->normalize();
-        std::get<1>(wp) = *tmp_psi;
-      }
-      _position_representation = true;
-      _momentum_representation = false;
-    }
-  }
-  /**
-   * @brief Returrns the coefficients (Eq. (3) in the reference bellow ) to
-   * perform the fractal decomposition of an exponential operator.
-   *
-   * Suzuki, Masuo. "Fractal decomposition of exponential operators with
-   * applications to many-body theories and Monte Carlo simulations." Physics
-   * Letters A 146.6 (1990): 319-323.
-   *
-   * @param k  Half of the total order of the desired approximant.
-   *
-   * @return list of coefficients to accomplish the of 2kth order approximant of
-   * the exponential operator.
-   */
-  std::vector<double> _suzuki_fractal_decomposition_coeffs(int k) {
-    // recursive generation of the coefficients in Eq. (3)
-    if (k < 0)
-      throw std::runtime_error("Simulation1D::_suzuki_fractal_decomposition_"
-                               "coeffs: k should be a positive integer.");
-    if (k == 1) {
-      return std::vector<double>{1.0};
-    } else {
-      std::vector<double> output;
-      /* Eq. (42)*/
-      double p_k = 1.0 / (4.0 - std::pow(4.0, (1.0 / (2.0 * k - 1.0))));
-      /*
-      // This actually match the coefficients in the reference
-      std::cout << std::setprecision(18);
-      std::cout<< "p["<< k <<"]= "<<p_k<<std::endl;
-      */
-      std::vector<double> k_th_coeffs = {p_k, p_k, 1.0 - 4.0 * p_k, p_k, p_k};
-      for (auto v : k_th_coeffs)
-        for (auto sfdc : _suzuki_fractal_decomposition_coeffs(k - 1))
-          output.push_back(v * sfdc);
-      return output;
-    }
-  }
-  /**
-   * @brief Returns a vector with the exponential of the kinetic energy part of
-   * the evolution  operator evaluated on a grid in  the momenttum
-   * representation. This routine evaluates the formula:
-   *
-   * e^{(x)T},
-   *
-   * with
-   *
-   * x=-i*_hbar*dt
-   *
-   * corresponding to the first factor of Eq.(5) in the reference [1].
-   *
-   * [1] Suzuki, Masuo. "Fractal decomposition of exponential operators with
-   * applications to many-body theories and Monte Carlo simulations." Physics
-   * Letters A 146.6 (1990): 319-323.
-   *
-   *
-   * @param dt
-   *
-   * @return
-   */
-  Eigen::VectorXcd _update_kinetic_exp_operator(double dt) {
-    _dt = dt;
-    // populating
-    double L = _x(_n_grid_points - 1) - _x(0);
-    // step-size in k
-    _dk = 2.0 * M_PI / L;
-    // discretization of the corresponding moomeentum
-    std::vector<double> _k;
-    // filling the momentum grid
-    _k.resize(_n_grid_points);
-    // populating _k with valuues between -_n_grid_points / 2 and _n_grid_points
-    // / 2-1
-    std::iota(_k.begin(), _k.end(), (double)(0));
-    // _k scaled by _dk
-    // fixing capture issues
-    double dK = _dk;
-    int N = _n_grid_points;
-    // see Spectral Methods in MATLAB. Lloyd N. Trefethen, pag 24.
-    std::transform(_k.begin(), _k.end(), _k.begin(), [N, dK](double i) {
-      return i < N / 2 ? i * dK : (i - N) * dK;
-    });
-    // __exp_T = e^(-i*dt*T/2)
-    Eigen::VectorXcd __exp_T;
-    __exp_T.resize(_n_grid_points);
-    for (int j = 0; j < _n_grid_points; ++j) {
-      double theta = -_k[j] * _k[j] / (2.0) * (_dt / (2 * _hbar));
-      __exp_T(j) = std::complex<double>(cos(theta), sin(theta));
-    }
-    return __exp_T;
   }
 };
 } // namespace PROCTOR
