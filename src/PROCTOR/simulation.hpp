@@ -74,16 +74,27 @@ public:
    */
   Simulation1D(const Eigen::VectorXd &x, double dx, double dt,
                int n_grid_points, int n_singlets, int n_doublets,
-               int n_triplets)
+               int n_triplets, int suzuki_method_order = 4)
       : _x(x), _dx(dx), _dt(dt), _n_grid_points(n_grid_points),
         _n_singlets(n_singlets), _n_doublets(n_doublets),
-        _n_triplets(n_triplets) {
+        _n_triplets(n_triplets)  {
     // checking that the information makes sense
 
     // Default behavior is that  the information for the initial wave packet is
     // loaded in position  representation
     _position_representation = true;
     _momentum_representation = false;
+    // set up the order of the approximant
+    set_suzuki_order(suzuki_method_order);    
+    _pn = _suzuki_fractal_decomposition_coeffs(_suzuki_fractal_order);
+    /*double count=0;
+    for(auto i:_pn)
+    {
+      std::cout << i << std::endl;
+      count +=i;
+    }
+    std::cout << "Suzuki accuum: " << count <<std::endl;*/
+
     // resizing containers
     _grid_idx.resize(_n_grid_points);
     std::iota(_grid_idx.begin(), _grid_idx.end(), 0);
@@ -117,14 +128,6 @@ public:
       _exp_T(j) = std::complex<double>(cos(theta), sin(theta));
     }
 
-    std::vector<double> test = _suzuki_fractal_decomposition_coeffs(6);
-    /*double count=0;
-    for(auto i:test)
-    {
-      std::cout << i << std::endl;
-      count +=i;
-    }
-    std::cout << "Suzuki accuum: " << count <<std::endl;*/
   }
   // Destructor
   ~Simulation1D() {}
@@ -136,9 +139,12 @@ public:
     {
     _suzuki_fractal_order = n/2;
     } else {
+      n += (n & 1);
     _suzuki_fractal_order = n/2 +1 ;
     }
   }
+
+
   /**
    * @brief Allows loading a wave packet to the state_idx-th PES of type
    * electronic_state_type. Being s the  spin quantum number, the string
@@ -415,6 +421,71 @@ public:
     //           << std::endl;
   }
   // Getters
+
+  /**
+   * @brief In the event of having a time-dependent perturbation interacting with the wave packet
+   * the problem iis reduced to an ordinary decomposition of exponential operators plus the 
+   * time-dependent signal avaluated at discrete times shifted forward. this implementation follows
+   * the references:
+   *
+   * [1] Suzuki, Masuo. "General decomposition theory of ordered exponentials." 
+   * Proceedings of the Japan Academy, Series B 69.7 (1993): 161-166.
+   *
+   * Idea is that a list of discrete times is returned to the driving routine in python to evaluate 
+   * the perturbation signal, the reslts of the evaluation is passed back to this class using the routine 
+   * set_perturbation_samples, then this information is used by the routines take_step_forward or take_step_backward
+   * that updates the simulation.
+   *
+   * @return Forward sampling points in time
+   */
+  std::vector<double> get_perturbation_sampling_forward()
+  {
+    std::vector<double> sampling_times;
+    for(auto pn: _pn)
+    {
+      sampling_times.push_back( simulation_time + 1.5*pn*_dt);
+    }
+    return sampling_times;
+  }
+  /**
+   * @brief In the event of having a time-dependent perturbation interacting with the wave packet
+   * the problem iis reduced to an ordinary decomposition of exponential operators plus the 
+   * time-dependent signal avaluated at discrete times shifted forward. this implementation follows
+   * the references:
+   *
+   * [1] Suzuki, Masuo. "General decomposition theory of ordered exponentials." 
+   * Proceedings of the Japan Academy, Series B 69.7 (1993): 161-166.
+   *
+   * Idea is that a list of discrete times is returned to the driving routine in python to evaluate 
+   * the perturbation signal, the reslts of the evaluation is passed back to this class using the routine 
+   * set_perturbation_samples, then this information is used by the routines take_step_forward or take_step_backward
+   * that updates the simulation.
+   *
+   * @return Backward sampling points in time
+   */
+  std::vector<double> get_perturbation_sampling_backward()
+  {
+    std::vector<double> sampling_times;
+    for(auto pn: _pn)
+    {
+      sampling_times.push_back( simulation_time - 1.5*pn*_dt);
+    }
+    return sampling_times;
+  }
+
+  /**
+   * @brief Set the pertrbation samples to be used by the take_step_forward or take_step_backward methods.
+   *
+   * @param perturbation_samples  Discrete samples of the time-dependent signal evaluuated at the sampling points
+   *                              provided either get_perturbation_sampling_forward or get_perturbation_sampling_backward
+   *                              routines.
+   */
+  void set_perturbation_signal_samples( std::vector<double> perturbation_samples )
+  {
+   _perturbation_signal_samples = perturbation_samples; 
+  }
+
+
   /**
    * @brief Check if the PES setup is correct
    *
@@ -945,11 +1016,22 @@ public:
     }
   }
 
-  // Controls
-  void step_forward(double _dt)
+  // Controllers
+  void step_forward()
   {
-    std::vector<double> pn = _suzuki_fractal_decomposition_coeffs(_suzuki_fractal_order);
+    if( _pn.size() != _perturbation_signal_samples.size())
+      throw std::runtime_error("step_forward:: Iconsistent vector sizes.");
 
+    // loop throuught the fractals weights using the symmetric approximant 
+    // until completing one step forward. 
+    std::vector< std::tuple<double,double> > _suzuki_data;
+    for(int i=0; i<_pn.size(); ++i)
+    {
+      _suzuki_data.push_back( std::tuple<double,double> {_pn[i],_perturbation_signal_samples[i]} );
+    }
+
+    
+  //void symmetrized_apprroximant(double __dt, double __epsilon) {
   }
 
 private:
@@ -1113,13 +1195,14 @@ private:
   std::map<std::string, int> propagation_method{
       {"implicit midpoint", 2}, {"Crank-Nicolson", 1}, {"Suzuki-fractal", 0}};
   // desired order of accuuracy to achive using Suzuki fractal decomposition method.
-  int _suzuki_fractal_order = 3;
+  int _suzuki_fractal_order;
   // weights for the Suzuki fractal decomposition method.
   std::vector<double> _pn;
   // list of times to evaluate the time dependent perturbation to be used with
   // the Suzuki fractal decomposition method.
   std::vector<double> _suzuki_fractal_perturbation_eval;
-
+  // list of samples of the time-dependent perturbation signal
+  std::vector<double> _perturbation_signal_samples;
   int _prop_method;
   // set true if the setup of the propagation scheme is complete
   bool _propagations_scheme_ready;
