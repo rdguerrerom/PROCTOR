@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Eigen/Dense>
+#include <unsupported/Eigen/MatrixFunctions>
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
@@ -776,7 +777,7 @@ extern "C" {
          */
         Eigen::Ref<Eigen::VectorXcd>  get_wave_packet(int state_idx, std::string electronic_state_type,
             Eigen::Ref<Eigen::VectorXcd> psi_0) {
-          // check if this key already exist, if so, rewrite it
+          // check if this key already exist, if so,  return the corresponding psi.
           for (std::tuple<int, Eigen::VectorXcd> &wp :
               _electronic_wave_packet[electronic_state_type]) {
             if (std::get<0>(wp) == state_idx) 
@@ -795,7 +796,7 @@ extern "C" {
         Eigen::Ref<Eigen::VectorXd>  get_PES(int state_idx, std::string electronic_state_type,
             Eigen::Ref<Eigen::VectorXd> PES) {
           bool done = false;
-          // check if this key already exist, if so, rewrite it
+          // check if this key already exist, if so,  return the corres return the corresponding PESS
           for (std::tuple<int, Eigen::VectorXd> &pes :
               _electronic_PES[electronic_state_type]) {
             if (std::get<0>(pes) == state_idx) {
@@ -814,7 +815,7 @@ extern "C" {
          */
         Eigen::Ref<Eigen::VectorXd> get_DM(int state_idx, std::string electronic_state_type,
             Eigen::Ref<Eigen::VectorXd> DM) {
-          // check if this key already exist, if so, rewrite it
+          // check if this key already exist, if so,  return the corresponding DM.
           for (std::tuple<int, Eigen::VectorXd> &dm :
               _electronic_DM[electronic_state_type]) {
             if (std::get<0>(dm) == state_idx) {
@@ -835,7 +836,7 @@ extern "C" {
         Eigen::Ref<Eigen::VectorXd> get_NACME(int state1_idx, int state2_idx,
             std::string electronic_state_type,
             Eigen::Ref<Eigen::VectorXd> NACME) {
-          // check if this key already exist, if so, rewrite it
+          // check if this key already exist, if so,  return the corresponding NACME
           for (std::tuple<int, int, Eigen::VectorXd> &nacme :
               _electronic_NACME[electronic_state_type]) {
             if (std::get<0>(nacme) == state1_idx &&
@@ -857,7 +858,7 @@ extern "C" {
         Eigen::Ref<Eigen::VectorXd> get_TDM(int state1_idx, int state2_idx,
             std::string electronic_state_type,
             Eigen::Ref<Eigen::VectorXd> TDM) {
-          // check if this key already exist, if so, rewrite it
+          // check if this key already exist, if so,  return the corresponding TDM
           for (std::tuple<int, int, Eigen::VectorXd> &tdm :
               _electronic_TDM[electronic_state_type]) {
             if (std::get<0>(tdm) == state1_idx && std::get<1>(tdm) == state2_idx) {
@@ -880,7 +881,7 @@ extern "C" {
             std::string electronic_state1_type,
             std::string electronic_state2_type,
             Eigen::Ref<Eigen::VectorXd> SOC) {
-          // check if this key already exist, if so, rewrite it
+          // check if this key already exist, if so, return the corresponding SOC. 
           for (std::tuple<int, int, Eigen::VectorXd> &soc :
               _electronic_SOC[std::tuple<std::string, std::string>{
               electronic_state1_type, electronic_state2_type}]) {
@@ -891,9 +892,10 @@ extern "C" {
         }
 
 
-        void symmetrized_apprroximant(double __dt, double epsilon)
+        void symmetrized_apprroximant(double __dt, double __epsilon)
         {
           if (_n_singlets > 0 && _n_doublets > 0 && _n_triplets > 0) {
+            // => BEGIN <= //
             // list of states to consider
             std::vector<std::string> _state_types = {"Singlet", "Doublet", "Triplet"};
             std::vector<int>  block_sizes = {_n_singlets, _n_doublets, _n_triplets};
@@ -933,27 +935,58 @@ extern "C" {
                   if(std::get<1>(_electronic_PES_loaded[std::get<0>(block1)][std::get<0>(pes1)]))
                   {
                     _V_loc(std::get<1>(block1) + std::get<0>(pes1), std::get<1>(block1) + std::get<0>(pes1)) += std::get<1>(pes1)(xi); 
-                    std::cout<< "V [" << std::get<1>(block1) + std::get<0>(pes1) << ", " << std::get<1>(block1) + std::get<0>(pes1) << "]" <<std::endl;
-
                   }
                 }
                 //DM    
                 for (std::tuple<int, Eigen::VectorXd> &dm1 :
                     _electronic_DM[std::get<0>(block1)]) 
                 {
-                  _V_loc(std::get<1>(block1) + std::get<0>(dm1), std::get<1>(block1) + std::get<0>(dm1)) += std::get<1>(dm1)(xi); 
+                  if(std::get<1>(_electronic_DM_loaded[std::get<0>(block1)][std::get<0>(dm1)]))
+                  _V_loc(std::get<1>(block1) + std::get<0>(dm1), std::get<1>(block1) + std::get<0>(dm1)) += __epsilon * std::get<1>(dm1)(xi); 
                 }
-                //for(std::tuple<std::string, int> block2: _blocking)
-                std::cout<< _V_loc << std::endl;
-                std::cout<< "==========================" <<std::endl;
+                // NACME
+                for (std::tuple<int, int, Eigen::VectorXd> &nacme1 :
+                    _electronic_NACME[std::get<0>(block1)]) {
+                  if(std::get<1>(_electronic_NACME_loaded[std::get<0>(block1)][std::get<0>(nacme1)])) {
+                      _V_loc(std::get<1>(block1) + std::get<0>(nacme1), std::get<1>(block1) + std::get<1>(nacme1)) += std::get<2>(nacme1)(xi);
+                      _V_loc(std::get<1>(block1) + std::get<1>(nacme1), std::get<1>(block1) + std::get<0>(nacme1)) += std::get<2>(nacme1)(xi);
+                  }
+                }
+                // TDM
+                for (std::tuple<int, int, Eigen::VectorXd> &tdm1 :
+                    _electronic_TDM[std::get<0>(block1)]) {
+                      if(std::get<1>(_electronic_TDM_loaded[std::get<0>(block1)][std::get<0>(tdm1)])) {
+                        _V_loc(std::get<1>(block1) + std::get<0>(tdm1), std::get<1>(block1) + std::get<1>(tdm1)) += __epsilon * std::get<2>(tdm1)(xi);
+                        _V_loc(std::get<1>(block1) + std::get<1>(tdm1), std::get<1>(block1) + std::get<0>(tdm1)) += __epsilon * std::get<2>(tdm1)(xi);
+                      }
+                }
+                // SOC
+                for(std::tuple<std::string, int> block2: _blocking)
+                {
+                  if( std::get<1>(block1) != std::get<1>(block2) )
+                  {
+                    for (std::tuple<int, int, Eigen::VectorXd> &soc1 :
+                        _electronic_SOC[std::tuple<std::string, std::string>{
+                        std::get<0>(block1), std::get<0>(block2)}]) {
+                        _V_loc(std::get<1>(block1) + std::get<0>(soc1), std::get<1>(block1) + std::get<1>(soc1)) += std::get<2>(soc1)(xi);
+                        _V_loc(std::get<1>(block1) + std::get<1>(soc1), std::get<1>(block1) + std::get<0>(soc1)) += std::get<2>(soc1)(xi);
+                          
+                    }
+
+                  }
+                }
+                // Local Hamiltonian is complete. multiplying it by  -i*dt
+                _V_loc *= -std::complex<double>(0.0, 1.0) * __dt;
+                // |psi_loc> -> e^{-i*V*dt} |psi_loc>
+                _psi_loc = _V_loc.exp() * _psi_loc;
+                // copying the results back to the global wave packet.
+              for(std::tuple<std::string, int> block: _blocking)
+                for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[std::get<0>(block)]) {
+                  std::get<1>(wp)(xi) = _psi_loc( std::get<1>(block) + std::get<0>(wp) );
+                }
+
               }
             }
-
-
-
-
-
-
             // => From position to momentum representation <= //
             _transform_to_momentum_representation();
             // => Propagation corresponding to half kinetic energy operator in momentum representation <= //
@@ -963,19 +996,630 @@ extern "C" {
               }
             // => From position to momentum representation <= //
             _transform_to_position_representation();
-
-
+            // => BEGIN <= //
           } else if (_n_singlets > 0 && _n_doublets > 0) {
+            // => BEGIN <= //
+            // list of states to consider
+            std::vector<std::string> _state_types = {"Singlet", "Doublet"};
+            std::vector<int>  block_sizes = {_n_singlets, _n_doublets};
+            // beginning of the block for each state type 
+            std::vector<std::tuple<std::string, int> > _blocking{{"Singlet", 0},{"Doublet", _n_singlets}};
+
+            // => From position to momentum representation <= //
+            _transform_to_momentum_representation();
+            // => Propagation corresponding to half kinetic energy operator in momentum representation <= //
+            Eigen::VectorXcd __exp_T = _update_kinetic_exp_operator( __dt );
+            for(auto state:_state_types)
+              for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[state]) {
+                std::get<1>(wp).array() *= __exp_T.array();
+              }
+            // => From position to momentum representation <= //
+            _transform_to_position_representation();
+            // => Propagation corresponding to the potential energy operator <= //
+            for(auto xi: _grid_idx)
+            {
+              // storage for the local wave function
+              Eigen::VectorXcd _psi_loc = Eigen::VectorXcd::Zero(_n_singlets + _n_doublets + _n_triplets);
+              // gathering the local wave function
+              for(std::tuple<std::string, int> block: _blocking)
+                for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[std::get<0>(block)]) {
+                  _psi_loc( std::get<1>(block) + std::get<0>(wp) ) = std::get<1>(wp)(xi);
+                }
+              // storage for the local nonadiabatic potential
+              Eigen::MatrixXcd _V_loc = Eigen::MatrixXcd::Zero(_n_singlets + _n_doublets + _n_triplets, _n_singlets + _n_doublets + _n_triplets);
+              // gathering the local Hamiltonian 
+              for(std::tuple<std::string, int> block1: _blocking)
+              {
+                //PES   
+                for (std::tuple<int, Eigen::VectorXd> &pes1 :
+                    _electronic_PES[std::get<0>(block1)]) 
+                {
+                  // if the PES is loaded, count it
+                  if(std::get<1>(_electronic_PES_loaded[std::get<0>(block1)][std::get<0>(pes1)]))
+                  {
+                    _V_loc(std::get<1>(block1) + std::get<0>(pes1), std::get<1>(block1) + std::get<0>(pes1)) += std::get<1>(pes1)(xi); 
+                  }
+                }
+                //DM    
+                for (std::tuple<int, Eigen::VectorXd> &dm1 :
+                    _electronic_DM[std::get<0>(block1)]) 
+                {
+                  if(std::get<1>(_electronic_DM_loaded[std::get<0>(block1)][std::get<0>(dm1)]))
+                  _V_loc(std::get<1>(block1) + std::get<0>(dm1), std::get<1>(block1) + std::get<0>(dm1)) += __epsilon * std::get<1>(dm1)(xi); 
+                }
+                // NACME
+                for (std::tuple<int, int, Eigen::VectorXd> &nacme1 :
+                    _electronic_NACME[std::get<0>(block1)]) {
+                  if(std::get<1>(_electronic_NACME_loaded[std::get<0>(block1)][std::get<0>(nacme1)])) {
+                      _V_loc(std::get<1>(block1) + std::get<0>(nacme1), std::get<1>(block1) + std::get<1>(nacme1)) += std::get<2>(nacme1)(xi);
+                      _V_loc(std::get<1>(block1) + std::get<1>(nacme1), std::get<1>(block1) + std::get<0>(nacme1)) += std::get<2>(nacme1)(xi);
+                  }
+                }
+                // TDM
+                for (std::tuple<int, int, Eigen::VectorXd> &tdm1 :
+                    _electronic_TDM[std::get<0>(block1)]) {
+                      if(std::get<1>(_electronic_TDM_loaded[std::get<0>(block1)][std::get<0>(tdm1)])) {
+                        _V_loc(std::get<1>(block1) + std::get<0>(tdm1), std::get<1>(block1) + std::get<1>(tdm1)) += __epsilon * std::get<2>(tdm1)(xi);
+                        _V_loc(std::get<1>(block1) + std::get<1>(tdm1), std::get<1>(block1) + std::get<0>(tdm1)) += __epsilon * std::get<2>(tdm1)(xi);
+                      }
+                }
+                // SOC
+                for(std::tuple<std::string, int> block2: _blocking)
+                {
+                  if( std::get<1>(block1) != std::get<1>(block2) )
+                  {
+                    for (std::tuple<int, int, Eigen::VectorXd> &soc1 :
+                        _electronic_SOC[std::tuple<std::string, std::string>{
+                        std::get<0>(block1), std::get<0>(block2)}]) {
+                        _V_loc(std::get<1>(block1) + std::get<0>(soc1), std::get<1>(block1) + std::get<1>(soc1)) += std::get<2>(soc1)(xi);
+                        _V_loc(std::get<1>(block1) + std::get<1>(soc1), std::get<1>(block1) + std::get<0>(soc1)) += std::get<2>(soc1)(xi);
+                          
+                    }
+
+                  }
+                }
+                // Local Hamiltonian is complete. multiplying it by  -i*dt
+                _V_loc *= -std::complex<double>(0.0, 1.0) * __dt;
+                // |psi_loc> -> e^{-i*V*dt} |psi_loc>
+                _psi_loc = _V_loc.exp() * _psi_loc;
+                // copying the results back to the global wave packet.
+              for(std::tuple<std::string, int> block: _blocking)
+                for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[std::get<0>(block)]) {
+                  std::get<1>(wp)(xi) = _psi_loc( std::get<1>(block) + std::get<0>(wp) );
+                }
+
+              }
+            }
+            // => From position to momentum representation <= //
+            _transform_to_momentum_representation();
+            // => Propagation corresponding to half kinetic energy operator in momentum representation <= //
+            for(auto state:_state_types)
+              for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[state]) {
+                std::get<1>(wp).array() *= __exp_T.array();
+              }
+            // => From position to momentum representation <= //
+            _transform_to_position_representation();
+            // => BEGIN <= //
           
           } else if (_n_singlets > 0 && _n_triplets > 0) {
+            // => BEGIN <= //
+            // list of states to consider
+            std::vector<std::string> _state_types = {"Singlet", "Triplet"};
+            std::vector<int>  block_sizes = {_n_singlets,  _n_triplets};
+            // beginning of the block for each state type 
+            std::vector<std::tuple<std::string, int> > _blocking{{"Singlet", 0},{"Triplet",_n_singlets}};
+
+            // => From position to momentum representation <= //
+            _transform_to_momentum_representation();
+            // => Propagation corresponding to half kinetic energy operator in momentum representation <= //
+            Eigen::VectorXcd __exp_T = _update_kinetic_exp_operator( __dt );
+            for(auto state:_state_types)
+              for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[state]) {
+                std::get<1>(wp).array() *= __exp_T.array();
+              }
+            // => From position to momentum representation <= //
+            _transform_to_position_representation();
+            // => Propagation corresponding to the potential energy operator <= //
+            for(auto xi: _grid_idx)
+            {
+              // storage for the local wave function
+              Eigen::VectorXcd _psi_loc = Eigen::VectorXcd::Zero(_n_singlets + _n_doublets + _n_triplets);
+              // gathering the local wave function
+              for(std::tuple<std::string, int> block: _blocking)
+                for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[std::get<0>(block)]) {
+                  _psi_loc( std::get<1>(block) + std::get<0>(wp) ) = std::get<1>(wp)(xi);
+                }
+              // storage for the local nonadiabatic potential
+              Eigen::MatrixXcd _V_loc = Eigen::MatrixXcd::Zero(_n_singlets + _n_doublets + _n_triplets, _n_singlets + _n_doublets + _n_triplets);
+              // gathering the local Hamiltonian 
+              for(std::tuple<std::string, int> block1: _blocking)
+              {
+                //PES   
+                for (std::tuple<int, Eigen::VectorXd> &pes1 :
+                    _electronic_PES[std::get<0>(block1)]) 
+                {
+                  // if the PES is loaded, count it
+                  if(std::get<1>(_electronic_PES_loaded[std::get<0>(block1)][std::get<0>(pes1)]))
+                  {
+                    _V_loc(std::get<1>(block1) + std::get<0>(pes1), std::get<1>(block1) + std::get<0>(pes1)) += std::get<1>(pes1)(xi); 
+                  }
+                }
+                //DM    
+                for (std::tuple<int, Eigen::VectorXd> &dm1 :
+                    _electronic_DM[std::get<0>(block1)]) 
+                {
+                  if(std::get<1>(_electronic_DM_loaded[std::get<0>(block1)][std::get<0>(dm1)]))
+                  _V_loc(std::get<1>(block1) + std::get<0>(dm1), std::get<1>(block1) + std::get<0>(dm1)) += __epsilon * std::get<1>(dm1)(xi); 
+                }
+                // NACME
+                for (std::tuple<int, int, Eigen::VectorXd> &nacme1 :
+                    _electronic_NACME[std::get<0>(block1)]) {
+                  if(std::get<1>(_electronic_NACME_loaded[std::get<0>(block1)][std::get<0>(nacme1)])) {
+                      _V_loc(std::get<1>(block1) + std::get<0>(nacme1), std::get<1>(block1) + std::get<1>(nacme1)) += std::get<2>(nacme1)(xi);
+                      _V_loc(std::get<1>(block1) + std::get<1>(nacme1), std::get<1>(block1) + std::get<0>(nacme1)) += std::get<2>(nacme1)(xi);
+                  }
+                }
+                // TDM
+                for (std::tuple<int, int, Eigen::VectorXd> &tdm1 :
+                    _electronic_TDM[std::get<0>(block1)]) {
+                      if(std::get<1>(_electronic_TDM_loaded[std::get<0>(block1)][std::get<0>(tdm1)])) {
+                        _V_loc(std::get<1>(block1) + std::get<0>(tdm1), std::get<1>(block1) + std::get<1>(tdm1)) += __epsilon * std::get<2>(tdm1)(xi);
+                        _V_loc(std::get<1>(block1) + std::get<1>(tdm1), std::get<1>(block1) + std::get<0>(tdm1)) += __epsilon * std::get<2>(tdm1)(xi);
+                      }
+                }
+                // SOC
+                for(std::tuple<std::string, int> block2: _blocking)
+                {
+                  if( std::get<1>(block1) != std::get<1>(block2) )
+                  {
+                    for (std::tuple<int, int, Eigen::VectorXd> &soc1 :
+                        _electronic_SOC[std::tuple<std::string, std::string>{
+                        std::get<0>(block1), std::get<0>(block2)}]) {
+                        _V_loc(std::get<1>(block1) + std::get<0>(soc1), std::get<1>(block1) + std::get<1>(soc1)) += std::get<2>(soc1)(xi);
+                        _V_loc(std::get<1>(block1) + std::get<1>(soc1), std::get<1>(block1) + std::get<0>(soc1)) += std::get<2>(soc1)(xi);
+                          
+                    }
+
+                  }
+                }
+                // Local Hamiltonian is complete. multiplying it by  -i*dt
+                _V_loc *= -std::complex<double>(0.0, 1.0) * __dt;
+                // |psi_loc> -> e^{-i*V*dt} |psi_loc>
+                _psi_loc = _V_loc.exp() * _psi_loc;
+                // copying the results back to the global wave packet.
+              for(std::tuple<std::string, int> block: _blocking)
+                for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[std::get<0>(block)]) {
+                  std::get<1>(wp)(xi) = _psi_loc( std::get<1>(block) + std::get<0>(wp) );
+                }
+
+              }
+            }
+            // => From position to momentum representation <= //
+            _transform_to_momentum_representation();
+            // => Propagation corresponding to half kinetic energy operator in momentum representation <= //
+            for(auto state:_state_types)
+              for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[state]) {
+                std::get<1>(wp).array() *= __exp_T.array();
+              }
+            // => From position to momentum representation <= //
+            _transform_to_position_representation();
+            // => BEGIN <= //
           
           } else if (_n_doublets > 0 && _n_triplets > 0) {
+            // => BEGIN <= //
+            // list of states to consider
+            std::vector<std::string> _state_types = {"Doublet", "Triplet"};
+            std::vector<int>  block_sizes = {_n_doublets, _n_triplets};
+            // beginning of the block for each state type 
+            std::vector<std::tuple<std::string, int> > _blocking{{"Doublet", 0},{"Triplet",_n_doublets}};
+
+            // => From position to momentum representation <= //
+            _transform_to_momentum_representation();
+            // => Propagation corresponding to half kinetic energy operator in momentum representation <= //
+            Eigen::VectorXcd __exp_T = _update_kinetic_exp_operator( __dt );
+            for(auto state:_state_types)
+              for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[state]) {
+                std::get<1>(wp).array() *= __exp_T.array();
+              }
+            // => From position to momentum representation <= //
+            _transform_to_position_representation();
+            // => Propagation corresponding to the potential energy operator <= //
+            for(auto xi: _grid_idx)
+            {
+              // storage for the local wave function
+              Eigen::VectorXcd _psi_loc = Eigen::VectorXcd::Zero(_n_singlets + _n_doublets + _n_triplets);
+              // gathering the local wave function
+              for(std::tuple<std::string, int> block: _blocking)
+                for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[std::get<0>(block)]) {
+                  _psi_loc( std::get<1>(block) + std::get<0>(wp) ) = std::get<1>(wp)(xi);
+                }
+              // storage for the local nonadiabatic potential
+              Eigen::MatrixXcd _V_loc = Eigen::MatrixXcd::Zero(_n_singlets + _n_doublets + _n_triplets, _n_singlets + _n_doublets + _n_triplets);
+              // gathering the local Hamiltonian 
+              for(std::tuple<std::string, int> block1: _blocking)
+              {
+                //PES   
+                for (std::tuple<int, Eigen::VectorXd> &pes1 :
+                    _electronic_PES[std::get<0>(block1)]) 
+                {
+                  // if the PES is loaded, count it
+                  if(std::get<1>(_electronic_PES_loaded[std::get<0>(block1)][std::get<0>(pes1)]))
+                  {
+                    _V_loc(std::get<1>(block1) + std::get<0>(pes1), std::get<1>(block1) + std::get<0>(pes1)) += std::get<1>(pes1)(xi); 
+                  }
+                }
+                //DM    
+                for (std::tuple<int, Eigen::VectorXd> &dm1 :
+                    _electronic_DM[std::get<0>(block1)]) 
+                {
+                  if(std::get<1>(_electronic_DM_loaded[std::get<0>(block1)][std::get<0>(dm1)]))
+                  _V_loc(std::get<1>(block1) + std::get<0>(dm1), std::get<1>(block1) + std::get<0>(dm1)) += __epsilon * std::get<1>(dm1)(xi); 
+                }
+                // NACME
+                for (std::tuple<int, int, Eigen::VectorXd> &nacme1 :
+                    _electronic_NACME[std::get<0>(block1)]) {
+                  if(std::get<1>(_electronic_NACME_loaded[std::get<0>(block1)][std::get<0>(nacme1)])) {
+                      _V_loc(std::get<1>(block1) + std::get<0>(nacme1), std::get<1>(block1) + std::get<1>(nacme1)) += std::get<2>(nacme1)(xi);
+                      _V_loc(std::get<1>(block1) + std::get<1>(nacme1), std::get<1>(block1) + std::get<0>(nacme1)) += std::get<2>(nacme1)(xi);
+                  }
+                }
+                // TDM
+                for (std::tuple<int, int, Eigen::VectorXd> &tdm1 :
+                    _electronic_TDM[std::get<0>(block1)]) {
+                      if(std::get<1>(_electronic_TDM_loaded[std::get<0>(block1)][std::get<0>(tdm1)])) {
+                        _V_loc(std::get<1>(block1) + std::get<0>(tdm1), std::get<1>(block1) + std::get<1>(tdm1)) += __epsilon * std::get<2>(tdm1)(xi);
+                        _V_loc(std::get<1>(block1) + std::get<1>(tdm1), std::get<1>(block1) + std::get<0>(tdm1)) += __epsilon * std::get<2>(tdm1)(xi);
+                      }
+                }
+                // SOC
+                for(std::tuple<std::string, int> block2: _blocking)
+                {
+                  if( std::get<1>(block1) != std::get<1>(block2) )
+                  {
+                    for (std::tuple<int, int, Eigen::VectorXd> &soc1 :
+                        _electronic_SOC[std::tuple<std::string, std::string>{
+                        std::get<0>(block1), std::get<0>(block2)}]) {
+                        _V_loc(std::get<1>(block1) + std::get<0>(soc1), std::get<1>(block1) + std::get<1>(soc1)) += std::get<2>(soc1)(xi);
+                        _V_loc(std::get<1>(block1) + std::get<1>(soc1), std::get<1>(block1) + std::get<0>(soc1)) += std::get<2>(soc1)(xi);
+                          
+                    }
+
+                  }
+                }
+                // Local Hamiltonian is complete. multiplying it by  -i*dt
+                _V_loc *= -std::complex<double>(0.0, 1.0) * __dt;
+                // |psi_loc> -> e^{-i*V*dt} |psi_loc>
+                _psi_loc = _V_loc.exp() * _psi_loc;
+                // copying the results back to the global wave packet.
+              for(std::tuple<std::string, int> block: _blocking)
+                for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[std::get<0>(block)]) {
+                  std::get<1>(wp)(xi) = _psi_loc( std::get<1>(block) + std::get<0>(wp) );
+                }
+
+              }
+            }
+            // => From position to momentum representation <= //
+            _transform_to_momentum_representation();
+            // => Propagation corresponding to half kinetic energy operator in momentum representation <= //
+            for(auto state:_state_types)
+              for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[state]) {
+                std::get<1>(wp).array() *= __exp_T.array();
+              }
+            // => From position to momentum representation <= //
+            _transform_to_position_representation();
+            // => BEGIN <= //
           
           } else if (_n_triplets > 0) {
+            // => BEGIN <= //
+            // list of states to consider
+            std::vector<std::string> _state_types = {"Triplet"};
+            std::vector<int>  block_sizes = {_n_triplets};
+            // beginning of the block for each state type 
+            std::vector<std::tuple<std::string, int> > _blocking{{"Triplet", 0}};
+
+            // => From position to momentum representation <= //
+            _transform_to_momentum_representation();
+            // => Propagation corresponding to half kinetic energy operator in momentum representation <= //
+            Eigen::VectorXcd __exp_T = _update_kinetic_exp_operator( __dt );
+            for(auto state:_state_types)
+              for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[state]) {
+                std::get<1>(wp).array() *= __exp_T.array();
+              }
+            // => From position to momentum representation <= //
+            _transform_to_position_representation();
+            // => Propagation corresponding to the potential energy operator <= //
+            for(auto xi: _grid_idx)
+            {
+              // storage for the local wave function
+              Eigen::VectorXcd _psi_loc = Eigen::VectorXcd::Zero(_n_singlets + _n_doublets + _n_triplets);
+              // gathering the local wave function
+              for(std::tuple<std::string, int> block: _blocking)
+                for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[std::get<0>(block)]) {
+                  _psi_loc( std::get<1>(block) + std::get<0>(wp) ) = std::get<1>(wp)(xi);
+                }
+              // storage for the local nonadiabatic potential
+              Eigen::MatrixXcd _V_loc = Eigen::MatrixXcd::Zero(_n_singlets + _n_doublets + _n_triplets, _n_singlets + _n_doublets + _n_triplets);
+              // gathering the local Hamiltonian 
+              for(std::tuple<std::string, int> block1: _blocking)
+              {
+                //PES   
+                for (std::tuple<int, Eigen::VectorXd> &pes1 :
+                    _electronic_PES[std::get<0>(block1)]) 
+                {
+                  // if the PES is loaded, count it
+                  if(std::get<1>(_electronic_PES_loaded[std::get<0>(block1)][std::get<0>(pes1)]))
+                  {
+                    _V_loc(std::get<1>(block1) + std::get<0>(pes1), std::get<1>(block1) + std::get<0>(pes1)) += std::get<1>(pes1)(xi); 
+                  }
+                }
+                //DM    
+                for (std::tuple<int, Eigen::VectorXd> &dm1 :
+                    _electronic_DM[std::get<0>(block1)]) 
+                {
+                  if(std::get<1>(_electronic_DM_loaded[std::get<0>(block1)][std::get<0>(dm1)]))
+                  _V_loc(std::get<1>(block1) + std::get<0>(dm1), std::get<1>(block1) + std::get<0>(dm1)) += __epsilon * std::get<1>(dm1)(xi); 
+                }
+                // NACME
+                for (std::tuple<int, int, Eigen::VectorXd> &nacme1 :
+                    _electronic_NACME[std::get<0>(block1)]) {
+                  if(std::get<1>(_electronic_NACME_loaded[std::get<0>(block1)][std::get<0>(nacme1)])) {
+                      _V_loc(std::get<1>(block1) + std::get<0>(nacme1), std::get<1>(block1) + std::get<1>(nacme1)) += std::get<2>(nacme1)(xi);
+                      _V_loc(std::get<1>(block1) + std::get<1>(nacme1), std::get<1>(block1) + std::get<0>(nacme1)) += std::get<2>(nacme1)(xi);
+                  }
+                }
+                // TDM
+                for (std::tuple<int, int, Eigen::VectorXd> &tdm1 :
+                    _electronic_TDM[std::get<0>(block1)]) {
+                      if(std::get<1>(_electronic_TDM_loaded[std::get<0>(block1)][std::get<0>(tdm1)])) {
+                        _V_loc(std::get<1>(block1) + std::get<0>(tdm1), std::get<1>(block1) + std::get<1>(tdm1)) += __epsilon * std::get<2>(tdm1)(xi);
+                        _V_loc(std::get<1>(block1) + std::get<1>(tdm1), std::get<1>(block1) + std::get<0>(tdm1)) += __epsilon * std::get<2>(tdm1)(xi);
+                      }
+                }
+                // SOC
+                for(std::tuple<std::string, int> block2: _blocking)
+                {
+                  if( std::get<1>(block1) != std::get<1>(block2) )
+                  {
+                    for (std::tuple<int, int, Eigen::VectorXd> &soc1 :
+                        _electronic_SOC[std::tuple<std::string, std::string>{
+                        std::get<0>(block1), std::get<0>(block2)}]) {
+                        _V_loc(std::get<1>(block1) + std::get<0>(soc1), std::get<1>(block1) + std::get<1>(soc1)) += std::get<2>(soc1)(xi);
+                        _V_loc(std::get<1>(block1) + std::get<1>(soc1), std::get<1>(block1) + std::get<0>(soc1)) += std::get<2>(soc1)(xi);
+                          
+                    }
+
+                  }
+                }
+                // Local Hamiltonian is complete. multiplying it by  -i*dt
+                _V_loc *= -std::complex<double>(0.0, 1.0) * __dt;
+                // |psi_loc> -> e^{-i*V*dt} |psi_loc>
+                _psi_loc = _V_loc.exp() * _psi_loc;
+                // copying the results back to the global wave packet.
+              for(std::tuple<std::string, int> block: _blocking)
+                for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[std::get<0>(block)]) {
+                  std::get<1>(wp)(xi) = _psi_loc( std::get<1>(block) + std::get<0>(wp) );
+                }
+
+              }
+            }
+            // => From position to momentum representation <= //
+            _transform_to_momentum_representation();
+            // => Propagation corresponding to half kinetic energy operator in momentum representation <= //
+            for(auto state:_state_types)
+              for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[state]) {
+                std::get<1>(wp).array() *= __exp_T.array();
+              }
+            // => From position to momentum representation <= //
+            _transform_to_position_representation();
+            // => BEGIN <= //
           
           } else if (_n_doublets > 0) {
+            // => BEGIN <= //
+            // list of states to consider
+            std::vector<std::string> _state_types = {"Doublet"};
+            std::vector<int>  block_sizes = {_n_doublets};
+            // beginning of the block for each state type 
+            std::vector<std::tuple<std::string, int> > _blocking{{"Doublet", 0}};
+
+            // => From position to momentum representation <= //
+            _transform_to_momentum_representation();
+            // => Propagation corresponding to half kinetic energy operator in momentum representation <= //
+            Eigen::VectorXcd __exp_T = _update_kinetic_exp_operator( __dt );
+            for(auto state:_state_types)
+              for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[state]) {
+                std::get<1>(wp).array() *= __exp_T.array();
+              }
+            // => From position to momentum representation <= //
+            _transform_to_position_representation();
+            // => Propagation corresponding to the potential energy operator <= //
+            for(auto xi: _grid_idx)
+            {
+              // storage for the local wave function
+              Eigen::VectorXcd _psi_loc = Eigen::VectorXcd::Zero(_n_singlets + _n_doublets + _n_triplets);
+              // gathering the local wave function
+              for(std::tuple<std::string, int> block: _blocking)
+                for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[std::get<0>(block)]) {
+                  _psi_loc( std::get<1>(block) + std::get<0>(wp) ) = std::get<1>(wp)(xi);
+                }
+              // storage for the local nonadiabatic potential
+              Eigen::MatrixXcd _V_loc = Eigen::MatrixXcd::Zero(_n_singlets + _n_doublets + _n_triplets, _n_singlets + _n_doublets + _n_triplets);
+              // gathering the local Hamiltonian 
+              for(std::tuple<std::string, int> block1: _blocking)
+              {
+                //PES   
+                for (std::tuple<int, Eigen::VectorXd> &pes1 :
+                    _electronic_PES[std::get<0>(block1)]) 
+                {
+                  // if the PES is loaded, count it
+                  if(std::get<1>(_electronic_PES_loaded[std::get<0>(block1)][std::get<0>(pes1)]))
+                  {
+                    _V_loc(std::get<1>(block1) + std::get<0>(pes1), std::get<1>(block1) + std::get<0>(pes1)) += std::get<1>(pes1)(xi); 
+                  }
+                }
+                //DM    
+                for (std::tuple<int, Eigen::VectorXd> &dm1 :
+                    _electronic_DM[std::get<0>(block1)]) 
+                {
+                  if(std::get<1>(_electronic_DM_loaded[std::get<0>(block1)][std::get<0>(dm1)]))
+                  _V_loc(std::get<1>(block1) + std::get<0>(dm1), std::get<1>(block1) + std::get<0>(dm1)) += __epsilon * std::get<1>(dm1)(xi); 
+                }
+                // NACME
+                for (std::tuple<int, int, Eigen::VectorXd> &nacme1 :
+                    _electronic_NACME[std::get<0>(block1)]) {
+                  if(std::get<1>(_electronic_NACME_loaded[std::get<0>(block1)][std::get<0>(nacme1)])) {
+                      _V_loc(std::get<1>(block1) + std::get<0>(nacme1), std::get<1>(block1) + std::get<1>(nacme1)) += std::get<2>(nacme1)(xi);
+                      _V_loc(std::get<1>(block1) + std::get<1>(nacme1), std::get<1>(block1) + std::get<0>(nacme1)) += std::get<2>(nacme1)(xi);
+                  }
+                }
+                // TDM
+                for (std::tuple<int, int, Eigen::VectorXd> &tdm1 :
+                    _electronic_TDM[std::get<0>(block1)]) {
+                      if(std::get<1>(_electronic_TDM_loaded[std::get<0>(block1)][std::get<0>(tdm1)])) {
+                        _V_loc(std::get<1>(block1) + std::get<0>(tdm1), std::get<1>(block1) + std::get<1>(tdm1)) += __epsilon * std::get<2>(tdm1)(xi);
+                        _V_loc(std::get<1>(block1) + std::get<1>(tdm1), std::get<1>(block1) + std::get<0>(tdm1)) += __epsilon * std::get<2>(tdm1)(xi);
+                      }
+                }
+                // SOC
+                for(std::tuple<std::string, int> block2: _blocking)
+                {
+                  if( std::get<1>(block1) != std::get<1>(block2) )
+                  {
+                    for (std::tuple<int, int, Eigen::VectorXd> &soc1 :
+                        _electronic_SOC[std::tuple<std::string, std::string>{
+                        std::get<0>(block1), std::get<0>(block2)}]) {
+                        _V_loc(std::get<1>(block1) + std::get<0>(soc1), std::get<1>(block1) + std::get<1>(soc1)) += std::get<2>(soc1)(xi);
+                        _V_loc(std::get<1>(block1) + std::get<1>(soc1), std::get<1>(block1) + std::get<0>(soc1)) += std::get<2>(soc1)(xi);
+                          
+                    }
+
+                  }
+                }
+                // Local Hamiltonian is complete. multiplying it by  -i*dt
+                _V_loc *= -std::complex<double>(0.0, 1.0) * __dt;
+                // |psi_loc> -> e^{-i*V*dt} |psi_loc>
+                _psi_loc = _V_loc.exp() * _psi_loc;
+                // copying the results back to the global wave packet.
+              for(std::tuple<std::string, int> block: _blocking)
+                for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[std::get<0>(block)]) {
+                  std::get<1>(wp)(xi) = _psi_loc( std::get<1>(block) + std::get<0>(wp) );
+                }
+
+              }
+            }
+            // => From position to momentum representation <= //
+            _transform_to_momentum_representation();
+            // => Propagation corresponding to half kinetic energy operator in momentum representation <= //
+            for(auto state:_state_types)
+              for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[state]) {
+                std::get<1>(wp).array() *= __exp_T.array();
+              }
+            // => From position to momentum representation <= //
+            _transform_to_position_representation();
+            // => BEGIN <= //
           
           } else if (_n_singlets > 0) {
+            // => BEGIN <= //
+            // list of states to consider
+            std::vector<std::string> _state_types = {"Singlet"};
+            std::vector<int>  block_sizes = {_n_singlets};
+            // beginning of the block for each state type 
+            std::vector<std::tuple<std::string, int> > _blocking{{"Singlet", 0}};
+
+            // => From position to momentum representation <= //
+            _transform_to_momentum_representation();
+            // => Propagation corresponding to half kinetic energy operator in momentum representation <= //
+            Eigen::VectorXcd __exp_T = _update_kinetic_exp_operator( __dt );
+            for(auto state:_state_types)
+              for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[state]) {
+                std::get<1>(wp).array() *= __exp_T.array();
+              }
+            // => From position to momentum representation <= //
+            _transform_to_position_representation();
+            // => Propagation corresponding to the potential energy operator <= //
+            for(auto xi: _grid_idx)
+            {
+              // storage for the local wave function
+              Eigen::VectorXcd _psi_loc = Eigen::VectorXcd::Zero(_n_singlets + _n_doublets + _n_triplets);
+              // gathering the local wave function
+              for(std::tuple<std::string, int> block: _blocking)
+                for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[std::get<0>(block)]) {
+                  _psi_loc( std::get<1>(block) + std::get<0>(wp) ) = std::get<1>(wp)(xi);
+                }
+              // storage for the local nonadiabatic potential
+              Eigen::MatrixXcd _V_loc = Eigen::MatrixXcd::Zero(_n_singlets + _n_doublets + _n_triplets, _n_singlets + _n_doublets + _n_triplets);
+              // gathering the local Hamiltonian 
+              for(std::tuple<std::string, int> block1: _blocking)
+              {
+                //PES   
+                for (std::tuple<int, Eigen::VectorXd> &pes1 :
+                    _electronic_PES[std::get<0>(block1)]) 
+                {
+                  // if the PES is loaded, count it
+                  if(std::get<1>(_electronic_PES_loaded[std::get<0>(block1)][std::get<0>(pes1)]))
+                  {
+                    _V_loc(std::get<1>(block1) + std::get<0>(pes1), std::get<1>(block1) + std::get<0>(pes1)) += std::get<1>(pes1)(xi); 
+                  }
+                }
+                //DM    
+                for (std::tuple<int, Eigen::VectorXd> &dm1 :
+                    _electronic_DM[std::get<0>(block1)]) 
+                {
+                  if(std::get<1>(_electronic_DM_loaded[std::get<0>(block1)][std::get<0>(dm1)]))
+                  _V_loc(std::get<1>(block1) + std::get<0>(dm1), std::get<1>(block1) + std::get<0>(dm1)) += __epsilon * std::get<1>(dm1)(xi); 
+                }
+                // NACME
+                for (std::tuple<int, int, Eigen::VectorXd> &nacme1 :
+                    _electronic_NACME[std::get<0>(block1)]) {
+                  if(std::get<1>(_electronic_NACME_loaded[std::get<0>(block1)][std::get<0>(nacme1)])) {
+                      _V_loc(std::get<1>(block1) + std::get<0>(nacme1), std::get<1>(block1) + std::get<1>(nacme1)) += std::get<2>(nacme1)(xi);
+                      _V_loc(std::get<1>(block1) + std::get<1>(nacme1), std::get<1>(block1) + std::get<0>(nacme1)) += std::get<2>(nacme1)(xi);
+                  }
+                }
+                // TDM
+                for (std::tuple<int, int, Eigen::VectorXd> &tdm1 :
+                    _electronic_TDM[std::get<0>(block1)]) {
+                      if(std::get<1>(_electronic_TDM_loaded[std::get<0>(block1)][std::get<0>(tdm1)])) {
+                        _V_loc(std::get<1>(block1) + std::get<0>(tdm1), std::get<1>(block1) + std::get<1>(tdm1)) += __epsilon * std::get<2>(tdm1)(xi);
+                        _V_loc(std::get<1>(block1) + std::get<1>(tdm1), std::get<1>(block1) + std::get<0>(tdm1)) += __epsilon * std::get<2>(tdm1)(xi);
+                      }
+                }
+                // SOC
+                for(std::tuple<std::string, int> block2: _blocking)
+                {
+                  if( std::get<1>(block1) != std::get<1>(block2) )
+                  {
+                    for (std::tuple<int, int, Eigen::VectorXd> &soc1 :
+                        _electronic_SOC[std::tuple<std::string, std::string>{
+                        std::get<0>(block1), std::get<0>(block2)}]) {
+                        _V_loc(std::get<1>(block1) + std::get<0>(soc1), std::get<1>(block1) + std::get<1>(soc1)) += std::get<2>(soc1)(xi);
+                        _V_loc(std::get<1>(block1) + std::get<1>(soc1), std::get<1>(block1) + std::get<0>(soc1)) += std::get<2>(soc1)(xi);
+                          
+                    }
+
+                  }
+                }
+                // Local Hamiltonian is complete. multiplying it by  -i*dt
+                _V_loc *= -std::complex<double>(0.0, 1.0) * __dt;
+                // |psi_loc> -> e^{-i*V*dt} |psi_loc>
+                _psi_loc = _V_loc.exp() * _psi_loc;
+                // copying the results back to the global wave packet.
+              for(std::tuple<std::string, int> block: _blocking)
+                for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[std::get<0>(block)]) {
+                  std::get<1>(wp)(xi) = _psi_loc( std::get<1>(block) + std::get<0>(wp) );
+                }
+
+              }
+            }
+            // => From position to momentum representation <= //
+            _transform_to_momentum_representation();
+            // => Propagation corresponding to half kinetic energy operator in momentum representation <= //
+            for(auto state:_state_types)
+              for (std::tuple<int, Eigen::VectorXcd> &wp : _electronic_wave_packet[state]) {
+                std::get<1>(wp).array() *= __exp_T.array();
+              }
+            // => From position to momentum representation <= //
+            _transform_to_position_representation();
+            // => BEGIN <= //
 
           }
         }
