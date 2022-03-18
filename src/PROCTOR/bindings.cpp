@@ -25,7 +25,7 @@ PYBIND11_PLUGIN(PROCTOR) {
       .def(py::init<>())
       .def(py::init<const Eigen::VectorXd & /*x*/, double /*dx*/, double /*dt*/,
                     int /*n_grid_points*/, int /*n_singlets*/,
-                    int /*n_doublets*/, int /*n_triplets*/>())
+                    int /*n_doublets*/, int /*n_triplets*/, int /*Suzki fractal decompositioon order*/>())
       // Expossing the setters
       .def("set_wave_packet", &Simulation1D::set_wave_packet)
       .def("set_PES", &Simulation1D::set_PES)
@@ -44,7 +44,10 @@ PYBIND11_PLUGIN(PROCTOR) {
       .def("get_DM", &Simulation1D::get_DM)
       .def("get_NACME", &Simulation1D::get_NACME)
       .def("get_TDM", &Simulation1D::get_TDM)
-      .def("symmetrized_apprroximant", &Simulation1D::symmetrized_apprroximant)
+      .def("get_perturbation_sampling_forward", &Simulation1D::get_perturbation_sampling_forward)
+      .def("get_perturbation_sampling_backward", &Simulation1D::get_perturbation_sampling_backward)
+      .def("set_perturbation_signal_samples", &Simulation1D::set_perturbation_signal_samples)
+      .def("step_forward", &Simulation1D::step_forward)
       .def("get_SOC", &Simulation1D::get_SOC);
 
   return mP.ptr();

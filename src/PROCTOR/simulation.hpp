@@ -77,7 +77,7 @@ public:
                int n_triplets, int suzuki_method_order = 4)
       : _x(x), _dx(dx), _dt(dt), _n_grid_points(n_grid_points),
         _n_singlets(n_singlets), _n_doublets(n_doublets),
-        _n_triplets(n_triplets)  {
+        _n_triplets(n_triplets) {
     // checking that the information makes sense
 
     // Default behavior is that  the information for the initial wave packet is
@@ -85,7 +85,7 @@ public:
     _position_representation = true;
     _momentum_representation = false;
     // set up the order of the approximant
-    set_suzuki_order(suzuki_method_order);    
+    set_suzuki_order(suzuki_method_order);
     _pn = _suzuki_fractal_decomposition_coeffs(_suzuki_fractal_order);
     /*double count=0;
     for(auto i:_pn)
@@ -127,23 +127,19 @@ public:
       double theta = -_k[j] * _k[j] / (2.0) * (_dt / (2.0 * _hbar));
       _exp_T(j) = std::complex<double>(cos(theta), sin(theta));
     }
-
   }
   // Destructor
   ~Simulation1D() {}
 
   // Setters
-  void set_suzuki_order(int n)
-  {
-    if(n % 2 == 0)
-    {
-    _suzuki_fractal_order = n/2;
+  void set_suzuki_order(int n) {
+    if (n % 2 == 0) {
+      _suzuki_fractal_order = n / 2;
     } else {
       n += (n & 1);
-    _suzuki_fractal_order = n/2 +1 ;
+      _suzuki_fractal_order = n / 2 + 1;
     }
   }
-
 
   /**
    * @brief Allows loading a wave packet to the state_idx-th PES of type
@@ -423,68 +419,67 @@ public:
   // Getters
 
   /**
-   * @brief In the event of having a time-dependent perturbation interacting with the wave packet
-   * the problem iis reduced to an ordinary decomposition of exponential operators plus the 
-   * time-dependent signal avaluated at discrete times shifted forward. this implementation follows
-   * the references:
+   * @brief In the event of having a time-dependent perturbation interacting
+   * with the wave packet the problem iis reduced to an ordinary decomposition
+   * of exponential operators plus the time-dependent signal avaluated at
+   * discrete times shifted forward. this implementation follows the references:
    *
-   * [1] Suzuki, Masuo. "General decomposition theory of ordered exponentials." 
+   * [1] Suzuki, Masuo. "General decomposition theory of ordered exponentials."
    * Proceedings of the Japan Academy, Series B 69.7 (1993): 161-166.
    *
-   * Idea is that a list of discrete times is returned to the driving routine in python to evaluate 
-   * the perturbation signal, the reslts of the evaluation is passed back to this class using the routine 
-   * set_perturbation_samples, then this information is used by the routines take_step_forward or take_step_backward
-   * that updates the simulation.
+   * Idea is that a list of discrete times is returned to the driving routine in
+   * python to evaluate the perturbation signal, the reslts of the evaluation is
+   * passed back to this class using the routine set_perturbation_samples, then
+   * this information is used by the routines take_step_forward or
+   * take_step_backward that updates the simulation.
    *
    * @return Forward sampling points in time
    */
-  std::vector<double> get_perturbation_sampling_forward()
-  {
+  std::vector<double> get_perturbation_sampling_forward() {
     std::vector<double> sampling_times;
-    for(auto pn: _pn)
-    {
-      sampling_times.push_back( simulation_time + 1.5*pn*_dt);
+    for (auto pn : _pn) {
+      sampling_times.push_back(simulation_time + 1.5 * pn * _dt);
     }
     return sampling_times;
   }
   /**
-   * @brief In the event of having a time-dependent perturbation interacting with the wave packet
-   * the problem iis reduced to an ordinary decomposition of exponential operators plus the 
-   * time-dependent signal avaluated at discrete times shifted forward. this implementation follows
-   * the references:
+   * @brief In the event of having a time-dependent perturbation interacting
+   * with the wave packet the problem iis reduced to an ordinary decomposition
+   * of exponential operators plus the time-dependent signal avaluated at
+   * discrete times shifted forward. this implementation follows the references:
    *
-   * [1] Suzuki, Masuo. "General decomposition theory of ordered exponentials." 
+   * [1] Suzuki, Masuo. "General decomposition theory of ordered exponentials."
    * Proceedings of the Japan Academy, Series B 69.7 (1993): 161-166.
    *
-   * Idea is that a list of discrete times is returned to the driving routine in python to evaluate 
-   * the perturbation signal, the reslts of the evaluation is passed back to this class using the routine 
-   * set_perturbation_samples, then this information is used by the routines take_step_forward or take_step_backward
-   * that updates the simulation.
+   * Idea is that a list of discrete times is returned to the driving routine in
+   * python to evaluate the perturbation signal, the reslts of the evaluation is
+   * passed back to this class using the routine set_perturbation_samples, then
+   * this information is used by the routines take_step_forward or
+   * take_step_backward that updates the simulation.
    *
    * @return Backward sampling points in time
    */
-  std::vector<double> get_perturbation_sampling_backward()
-  {
+  std::vector<double> get_perturbation_sampling_backward() {
     std::vector<double> sampling_times;
-    for(auto pn: _pn)
-    {
-      sampling_times.push_back( simulation_time - 1.5*pn*_dt);
+    for (auto pn : _pn) {
+      sampling_times.push_back(simulation_time - 1.5 * pn * _dt);
     }
     return sampling_times;
   }
 
   /**
-   * @brief Set the pertrbation samples to be used by the take_step_forward or take_step_backward methods.
+   * @brief Set the pertrbation samples to be used by the take_step_forward or
+   * take_step_backward methods.
    *
-   * @param perturbation_samples  Discrete samples of the time-dependent signal evaluuated at the sampling points
-   *                              provided either get_perturbation_sampling_forward or get_perturbation_sampling_backward
+   * @param perturbation_samples  Discrete samples of the time-dependent signal
+   * evaluuated at the sampling points provided either
+   * get_perturbation_sampling_forward or get_perturbation_sampling_backward
    *                              routines.
    */
-  void set_perturbation_signal_samples( std::vector<double> perturbation_samples )
-  {
-   _perturbation_signal_samples = perturbation_samples; 
+  void
+  set_perturbation_signal_samples(std::vector<double> perturbation_samples) {
+    _perturbation_signal_samples = perturbation_samples;
   }
-
 
   /**
    * @brief Check if the PES setup is correct
@@ -1017,21 +1012,19 @@ public:
   }
 
   // Controllers
-  void step_forward()
-  {
-    if( _pn.size() != _perturbation_signal_samples.size())
+  void step_forward() {
+    if (_pn.size() != _perturbation_signal_samples.size())
       throw std::runtime_error("step_forward:: Iconsistent vector sizes.");
 
-    // loop throuught the fractals weights using the symmetric approximant 
-    // until completing one step forward. 
-    std::vector< std::tuple<double,double> > _suzuki_data;
-    for(int i=0; i<_pn.size(); ++i)
-    {
-      _suzuki_data.push_back( std::tuple<double,double> {_pn[i],_perturbation_signal_samples[i]} );
+    // loop throuught the fractals weights using the symmetric approximant
+    // until completing one step forward.
+    std::vector<std::tuple<double, double>> _suzuki_data;
+    for (int i = 0; i < _pn.size(); ++i) {
+      _suzuki_data.push_back(
+          std::tuple<double, double>{_pn[i], _perturbation_signal_samples[i]});
     }
-
-    
-  //void symmetrized_apprroximant(double __dt, double __epsilon) {
+   for(auto &&[pn,epsilon]: _suzuki_data) 
+     symmetrized_apprroximant(_dt*pn, epsilon);
   }
 
 private:
@@ -1194,7 +1187,8 @@ private:
   // only unitary and  symplectic schemes will be implemented.
   std::map<std::string, int> propagation_method{
       {"implicit midpoint", 2}, {"Crank-Nicolson", 1}, {"Suzuki-fractal", 0}};
-  // desired order of accuuracy to achive using Suzuki fractal decomposition method.
+  // desired order of accuuracy to achive using Suzuki fractal decomposition
+  // method.
   int _suzuki_fractal_order;
   // weights for the Suzuki fractal decomposition method.
   std::vector<double> _pn;
@@ -1388,17 +1382,19 @@ private:
    * @brief Symmetrized approximant to the timee-evolution opertator
    * Current implementation is based on the following references:
    *
-   * [1] Alvarellos, José, and Horia Metiu. 
-   * "The evolution of the wave function in a curve crossing problem computed by a fast Fourier transform method." 
-   * The Journal of chemical physics 88.8 (1988): 4957-4966.
+   * [1] Alvarellos, José, and Horia Metiu.
+   * "The evolution of the wave function in a curve crossing problem computed by
+   * a fast Fourier transform method." The Journal of chemical physics 88.8
+   * (1988): 4957-4966.
    *
-   * [2] Hatano, Naomichi, and Masuo Suzuki. 
-   * "Finding exponential product formulas of higher orders." Quantum annealing and other optimization methods. 
-   * Springer, Berlin, Heidelberg, 2005. 37-68.
+   * [2] Hatano, Naomichi, and Masuo Suzuki.
+   * "Finding exponential product formulas of higher orders." Quantum annealing
+   * and other optimization methods. Springer, Berlin, Heidelberg, 2005. 37-68.
    *
    *
    * @param __dt       Time-step for setting up the approximant.
-   * @param __epsilon  Electric field compnent of the external light pulse that is interacting with the wave packet.
+   * @param __epsilon  Electric field compnent of the external light pulse that
+   * is interacting with the wave packet.
    */
   void symmetrized_apprroximant(double __dt, double __epsilon) {
     if (_n_singlets > 0 && _n_doublets > 0 && _n_triplets > 0) {
@@ -1425,6 +1421,7 @@ private:
       // => From position to momentum representation <= //
       _transform_to_position_representation();
       // => Propagation corresponding to the potential energy operator <= //
+#pragma omp parallel for
       for (auto xi : _grid_idx) {
         // storage for the local wave function
         Eigen::VectorXcd _psi_loc =
@@ -1550,6 +1547,7 @@ private:
       // => From position to momentum representation <= //
       _transform_to_position_representation();
       // => Propagation corresponding to the potential energy operator <= //
+#pragma omp parallel for
       for (auto xi : _grid_idx) {
         // storage for the local wave function
         Eigen::VectorXcd _psi_loc =
@@ -1676,6 +1674,7 @@ private:
       // => From position to momentum representation <= //
       _transform_to_position_representation();
       // => Propagation corresponding to the potential energy operator <= //
+#pragma omp parallel for
       for (auto xi : _grid_idx) {
         // storage for the local wave function
         Eigen::VectorXcd _psi_loc =
@@ -1802,6 +1801,7 @@ private:
       // => From position to momentum representation <= //
       _transform_to_position_representation();
       // => Propagation corresponding to the potential energy operator <= //
+#pragma omp parallel for
       for (auto xi : _grid_idx) {
         // storage for the local wave function
         Eigen::VectorXcd _psi_loc =
@@ -1927,6 +1927,7 @@ private:
       // => From position to momentum representation <= //
       _transform_to_position_representation();
       // => Propagation corresponding to the potential energy operator <= //
+#pragma omp parallel for
       for (auto xi : _grid_idx) {
         // storage for the local wave function
         Eigen::VectorXcd _psi_loc =
@@ -2052,6 +2053,7 @@ private:
       // => From position to momentum representation <= //
       _transform_to_position_representation();
       // => Propagation corresponding to the potential energy operator <= //
+#pragma omp parallel for
       for (auto xi : _grid_idx) {
         // storage for the local wave function
         Eigen::VectorXcd _psi_loc =
@@ -2177,6 +2179,7 @@ private:
       // => From position to momentum representation <= //
       _transform_to_position_representation();
       // => Propagation corresponding to the potential energy operator <= //
+#pragma omp parallel for
       for (auto xi : _grid_idx) {
         // storage for the local wave function
         Eigen::VectorXcd _psi_loc =
